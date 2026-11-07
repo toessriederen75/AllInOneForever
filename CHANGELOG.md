@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.18.1
+- Header symbols of the bag windows now sit on small dark slate buttons with a bevelled edge, like Blizzard's own sort button; the edge turns gold under the mouse and while active.
+
 ## 2.18.0
 - Mail: saved contacts under your characters on the send page. Type a name (or leave it empty to take the one in the "To:" field) and press "+"; a click fills in the recipient, a right click removes the contact. Shared by all your characters.
 

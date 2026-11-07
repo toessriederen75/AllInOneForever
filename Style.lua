@@ -488,43 +488,56 @@ function FlatButton(parent, text, width, height, onClick)
 end
 
 --- A square icon button with a 1px border, for headers and side bars.
---- A plain line symbol without a background (the header buttons of the bag
---- windows): pale gold, brighter with a soft golden glow under the mouse or
---- while active. `glyph` is a name from Media\ui\glyph_<name>.
+--- A header button of the bag windows in Blizzard's modern look: a small
+--- dark slate square with a bevelled edge and a pale gold line symbol, like
+--- Blizzard's own sort button in the new bags. The edge turns gold under the
+--- mouse and while active. `glyph` is a name from Media\ui\glyph_<name>.
 local GLYPH_DIR = "Interface\\AddOns\\" .. ADDON .. "\\Media\\ui\\glyph_"
-local GLYPH_IDLE, GLYPH_LIT = { 0.91, 0.81, 0.56 }, { 1, 0.92, 0.66 }
+local GLYPH_IDLE, GLYPH_LIT = { 0.94, 0.84, 0.60 }, { 1, 0.93, 0.70 }
+local EDGE_IDLE, EDGE_LIT = { 0.42, 0.38, 0.32, 0.9 }, { 0.95, 0.76, 0.35, 1 }
 
 function Style.Glyph(parent, glyph, size, tip, onClick)
-    size = size or 22
+    size = size or 26
     local b = CreateFrame("Button", nil, parent)
-    b:SetSize(size, size)
-    b.glow = b:CreateTexture(nil, "BACKGROUND")
-    b.glow:SetTexture(GLYPH_DIR .. "glow")
-    b.glow:SetPoint("CENTER")
-    b.glow:SetSize(size * 1.5, size * 1.5)
-    b.glow:SetVertexColor(1, 0.83, 0.42, 0.45)
-    b.glow:Hide()
-    b.shadow = b:CreateTexture(nil, "ARTWORK", nil, 0)
-    b.shadow:SetTexture(GLYPH_DIR .. glyph)
-    b.shadow:SetPoint("TOPLEFT", 1, -2)
-    b.shadow:SetPoint("BOTTOMRIGHT", 1, -2)
-    b.shadow:SetVertexColor(0, 0, 0, 0.85)
-    b.icon = b:CreateTexture(nil, "ARTWORK", nil, 1)
+    b:SetSize(size, size - 2)
+    b.fill = Gradient(b:CreateTexture(nil, "BACKGROUND"), { 0.29, 0.27, 0.24, 1 }, { 0.13, 0.12, 0.10, 1 })
+    b.fill:SetPoint("TOPLEFT", 1, -1)
+    b.fill:SetPoint("BOTTOMRIGHT", -1, 1)
+    Ring(b, 0, { 0, 0, 0, 0.95 })
+    b.edge = Ring(b, 1, EDGE_IDLE)
+    b.lit = b:CreateTexture(nil, "BORDER", nil, 1)
+    b.lit:SetTexture(WHITE)
+    b.lit:SetPoint("TOPLEFT", 2, -2)
+    b.lit:SetPoint("BOTTOMRIGHT", -2, 2)
+    b.lit:SetVertexColor(1, 0.78, 0.35, 0.12)
+    b.lit:SetBlendMode("ADD")
+    b.lit:Hide()
+    local inset = math.floor(size * 0.18 + 0.5)
+    b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetTexture(GLYPH_DIR .. glyph)
-    b.icon:SetAllPoints()
+    b.icon:SetPoint("TOPLEFT", inset, -inset + 1)
+    b.icon:SetPoint("BOTTOMRIGHT", -inset, inset - 1)
     b.icon:SetVertexColor(unpack(GLYPH_IDLE))
     b.tip = tip
     local function paint(self)
         local lit = self.active or self.hover
-        self.glow:SetShown(lit and true or false)
+        local c = lit and EDGE_LIT or EDGE_IDLE
+        for _, t in ipairs(self.edge) do t:SetVertexColor(c[1], c[2], c[3], c[4]) end
+        self.lit:SetShown(self.active and true or false)
         self.icon:SetVertexColor(unpack(lit and GLYPH_LIT or GLYPH_IDLE))
     end
     b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     b:SetScript("OnClick", function(self, button)
         if onClick then onClick(self, button) end
     end)
-    b:SetScript("OnMouseDown", function(self) self.icon:SetPoint("TOPLEFT", 1, -1); self.icon:SetPoint("BOTTOMRIGHT", 1, -1) end)
-    b:SetScript("OnMouseUp", function(self) self.icon:ClearAllPoints(); self.icon:SetAllPoints() end)
+    b:SetScript("OnMouseDown", function(self)
+        self.icon:SetPoint("TOPLEFT", inset + 1, -inset)
+        self.icon:SetPoint("BOTTOMRIGHT", -inset + 1, inset - 2)
+    end)
+    b:SetScript("OnMouseUp", function(self)
+        self.icon:SetPoint("TOPLEFT", inset, -inset + 1)
+        self.icon:SetPoint("BOTTOMRIGHT", -inset, inset - 1)
+    end)
     b:SetScript("OnEnter", function(self)
         self.hover = true
         paint(self)

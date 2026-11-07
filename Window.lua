@@ -106,9 +106,10 @@ local function IconButton(parent, icon, tip, onClick)
 end
 AIO.IconButton = IconButton
 
---- Header buttons of the windows: plain line symbols (Media\ui\glyph_*).
+--- Header buttons of the windows: slate squares with a line symbol
+--- (Media\ui\glyph_*), in Blizzard's modern bag look.
 local function HeaderButton(parent, glyph, tip, onClick)
-    return Style.Glyph(parent, glyph, 22, tip, onClick)
+    return Style.Glyph(parent, glyph, 26, tip, onClick)
 end
 
 --- A header button from a window definition's list: a symbol (`glyph`) or,
@@ -150,20 +151,20 @@ local function ModernChrome(f, id, def)
     local x = -10
     if def.CanSort then
         f.sortButton = HeaderButton(f, "sort", L["Sort"], function() AIO:Sort(id) end)
-        f.sortButton:SetPoint("TOPRIGHT", x, -33)
-        x = x - 28
+        f.sortButton:SetPoint("TOPRIGHT", x, -32)
+        x = x - 30
     end
     f.optionsButton = HeaderButton(f, "gear", L["Options"],
         function() AIO:OpenOptions(AIO.windowPages and AIO.windowPages[id] or "bags") end)
-    f.optionsButton:SetPoint("TOPRIGHT", x, -33)
-    x = x - 28
+    f.optionsButton:SetPoint("TOPRIGHT", x, -32)
+    x = x - 30
     for _, hb in ipairs(def.headerButtons or {}) do
         local b = DefButton(f, hb, function() hb.click(f) end)
-        b:SetPoint("TOPRIGHT", x, -33)
+        b:SetPoint("TOPRIGHT", x, -32)
         b.def = hb
         f.headerButtons = f.headerButtons or {}
         f.headerButtons[#f.headerButtons + 1] = b
-        x = x - 28
+        x = x - 30
     end
     if def.Owners then
         f.ownerButton = HeaderButton(f, "char",
@@ -171,8 +172,8 @@ local function ModernChrome(f, id, def)
                 local items = def.Owners(f)
                 if items and #items > 0 then AIO:OpenMenu(self, items) end
             end)
-        f.ownerButton:SetPoint("TOPRIGHT", x, -33)
-        x = x - 28
+        f.ownerButton:SetPoint("TOPRIGHT", x, -32)
+        x = x - 30
     end
 
     f.search = CreateFrame("EditBox", nil, f, "SearchBoxTemplate")
@@ -206,20 +207,20 @@ local function DrawnChrome(f, id, def)
     local x = -10
     if def.CanSort then
         f.sortButton = HeaderButton(f, "sort", L["Sort"], function() AIO:Sort(id) end)
-        f.sortButton:SetPoint("TOPRIGHT", x, -35)
-        x = x - 28
+        f.sortButton:SetPoint("TOPRIGHT", x, -34)
+        x = x - 30
     end
     f.optionsButton = HeaderButton(f, "gear", L["Options"],
         function() AIO:OpenOptions(AIO.windowPages and AIO.windowPages[id] or "bags") end)
-    f.optionsButton:SetPoint("TOPRIGHT", x, -35)
-    x = x - 28
+    f.optionsButton:SetPoint("TOPRIGHT", x, -34)
+    x = x - 30
     for _, hb in ipairs(def.headerButtons or {}) do
         local b = DefButton(f, hb, function() hb.click(f) end)
-        b:SetPoint("TOPRIGHT", x, -35)
+        b:SetPoint("TOPRIGHT", x, -34)
         b.def = hb
         f.headerButtons = f.headerButtons or {}
         f.headerButtons[#f.headerButtons + 1] = b
-        x = x - 28
+        x = x - 30
     end
     if def.Owners then
         f.ownerButton = HeaderButton(f, "char",
@@ -227,8 +228,8 @@ local function DrawnChrome(f, id, def)
                 local items = def.Owners(f)
                 if items and #items > 0 then AIO:OpenMenu(self, items) end
             end)
-        f.ownerButton:SetPoint("TOPRIGHT", x, -35)
-        x = x - 28
+        f.ownerButton:SetPoint("TOPRIGHT", x, -34)
+        x = x - 30
     end
 
     -- Search box with the magnifier, like the backpack's.
