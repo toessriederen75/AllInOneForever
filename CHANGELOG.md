@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.22.0
+- Bank: a row of the bank bag slots at the bottom of the bank window – drop a bag in, click to take it out; slots not bought yet are red. Next to it the button to buy the next slot (works with bank bag slots and with bank tabs). /aio info also lists which bank functions the client has.
+
 ## 2.21.0
 - Travel routes: every WoW Forever boat and zeppelin, with the exact dock positions – Stormwind Harbor, the Menethil–Southshore–Auberdine round trip (one way), Steamwheedle Port–Powderfuse Port, Zephras Isle from Dalaran and Skywatcher Plateau, Feathermoon, and the classic routes.
 

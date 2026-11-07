@@ -52,6 +52,8 @@ if GetLocale() == "deDE" then
     L["unlimited"]            = "unbegrenzt"
     L["Buy bank slot"]        = "Bankfach kaufen"
     L["Buy a bank bag slot for %s?"] = "Ein Bankfach für %s kaufen?"
+    L["Bank bag slot (not bought yet)"] = "Bankfach (noch nicht gekauft)"
+    L["Bank bag slot: drop a bag here"] = "Bankfach: hier eine Tasche hineinlegen"
     L["No data for this guild yet. Open the guild bank once."] =
         "Noch keine Daten für diese Gilde. Öffne die Gildenbank einmal."
     L["No bank data yet. Visit a banker once with this character."] =

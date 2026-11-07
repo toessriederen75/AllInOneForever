@@ -764,6 +764,10 @@ AIO:On("PLAYERBANKBAGSLOTS_CHANGED", function()
     if AIO.atBank then AIO:ScanBank() end
     AIO:RefreshAll()
 end)
+-- Newer clients: bank tabs instead of bank bag slots.
+if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("BANK_TABS_CHANGED") then
+    AIO:On("BANK_TABS_CHANGED", function() AIO:RefreshAll() end)
+end
 AIO:On("ITEM_LOCK_CHANGED", function() AIO:RepaintAll() end)
 AIO:On("BAG_UPDATE_COOLDOWN", function() AIO:RepaintAll() end)
 
@@ -819,6 +823,9 @@ SlashCmdList.ALLINONE = function(msg)
             if n > 0 then parts[#parts + 1] = ("%d:%d/%d"):format(bag, AIO.FreeSlots(bag), n) end
         end
         AIO:Print(("Bank open: %s  slots (bag:free/total): %s"):format(tostring(AIO.atBank), table.concat(parts, "  ")))
+        AIO:Print(("API: GetNumBankSlots=%s PurchaseSlot=%s C_Bank=%s PutItemInBag=%s ContainerIDToInventoryID=%s"):format(
+            tostring(GetNumBankSlots ~= nil), tostring(PurchaseSlot ~= nil), tostring(C_Bank ~= nil),
+            tostring(PutItemInBag ~= nil), tostring((C_Container and C_Container.ContainerIDToInventoryID) ~= nil)))
         AIO:Print(("NUM_BANKBAGSLOTS=%s  NUM_TOTAL_EQUIPPED_BAG_SLOTS=%s  first bank bag=%s  reagent bag=%s"):format(
             tostring(_G.NUM_BANKBAGSLOTS), tostring(_G.NUM_TOTAL_EQUIPPED_BAG_SLOTS),
             tostring(AIO.FIRST_BANKBAG), tostring(AIO.REAGENTBAG)))

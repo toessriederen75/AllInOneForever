@@ -197,11 +197,48 @@ local function BankLive(w)
     return AIO.atBank and IsMe(w)
 end
 
+-- Bank bag slots: the old way (GetNumBankSlots / PurchaseSlot) or, on newer
+-- clients, bank tabs (C_Bank). Returns bought, all bought?, cost of the next.
+local CB = C_Bank
+local CHAR_BANK = Enum and Enum.BankType and Enum.BankType.Character or 0
+
+local function BankSlots()
+    if GetNumBankSlots then
+        local num, full = GetNumBankSlots()
+        return num or 0, full, GetBankSlotCost and GetBankSlotCost(num or 0) or 0
+    end
+    if CB and CB.FetchNumPurchasedBankTabs then
+        local num = CB.FetchNumPurchasedBankTabs(CHAR_BANK) or 0
+        local nextTab = CB.FetchNextPurchasableBankTabData and CB.FetchNextPurchasableBankTabData(CHAR_BANK)
+        local full = CB.HasMaxBankTabs and CB.HasMaxBankTabs(CHAR_BANK) or not nextTab
+        return num, full, nextTab and nextTab.tabCost or 0
+    end
+    return 0, true, 0
+end
+
+local function BuyBankSlot()
+    if PurchaseSlot then PurchaseSlot()
+    elseif CB and CB.PurchaseBankTab then CB.PurchaseBankTab(CHAR_BANK) end
+end
+
+--- Inventory slot of a bank bag (for putting a bag in or taking it out).
+local function BankBagInv(bag)
+    if C_Container and C_Container.ContainerIDToInventoryID then
+        local ok, inv = pcall(C_Container.ContainerIDToInventoryID, bag)
+        if ok and inv then return inv end
+    end
+    if ContainerIDToInventoryID then
+        local ok, inv = pcall(ContainerIDToInventoryID, bag)
+        if ok and inv then return inv end
+    end
+    return nil
+end
+
 StaticPopupDialogs["ALLINONE_BUY_BANKSLOT"] = {
     text = "%s",
     button1 = YES,
     button2 = NO,
-    OnAccept = function() if PurchaseSlot then PurchaseSlot() end end,
+    OnAccept = function() BuyBankSlot() end,
     timeout = 0,
     whileDead = true,
     hideOnEscape = true,
@@ -231,23 +268,83 @@ local bank = {
     end,
     Money = inventory.Money,
     Build = function(w)
-        w.buy = AIO.Style.Button(w, L["Buy bank slot"], 130, 20)
-        w.buy:SetPoint("BOTTOMLEFT", 10, 34)
+        -- A row of the bank bag slots (put a bag in, take it out; red ones
+        -- are not bought yet) and the button to buy the next one.
+        w.bagSlots = {}
+        for i = 1, AIO.NUM_BANKBAGS do
+            local bag = AIO.FIRST_BANKBAG + i - 1
+            local b = CreateFrame("Button", nil, w)
+            b:SetSize(26, 26)
+            b:SetPoint("BOTTOMLEFT", 12 + (i - 1) * 29, 38)
+            b.bg = b:CreateTexture(nil, "BACKGROUND")
+            b.bg:SetAllPoints()
+            b.bg:SetColorTexture(0, 0, 0, 0.6)
+            b.icon = b:CreateTexture(nil, "ARTWORK")
+            b.icon:SetPoint("TOPLEFT", 1, -1)
+            b.icon:SetPoint("BOTTOMRIGHT", -1, 1)
+            b.lock = b:CreateTexture(nil, "OVERLAY")
+            b.lock:SetAllPoints()
+            b.lock:SetColorTexture(0.8, 0.1, 0.1, 0.35)
+            b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+            b.bag, b.index = bag, i
+            b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+            b:RegisterForDrag("LeftButton")
+            local function use(self)
+                local inv = BankBagInv(self.bag)
+                if not inv or self.locked then return end
+                if CursorHasItem() then PutItemInBag(inv) else PickupBagFromSlot(inv) end
+            end
+            b:SetScript("OnClick", use)
+            b:SetScript("OnDragStart", use)
+            b:SetScript("OnReceiveDrag", use)
+            b:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_TOP")
+                local inv = BankBagInv(self.bag)
+                if self.locked then
+                    GameTooltip:SetText(L["Bank bag slot (not bought yet)"], 1, 0.3, 0.3)
+                elseif inv and GetInventoryItemTexture("player", inv) then
+                    GameTooltip:SetInventoryItem("player", inv)
+                else
+                    GameTooltip:SetText(L["Bank bag slot: drop a bag here"], 1, 1, 1)
+                end
+                GameTooltip:Show()
+            end)
+            b:SetScript("OnLeave", GameTooltip_Hide)
+            b:Hide()
+            w.bagSlots[i] = b
+        end
+        w.buy = AIO.Style.Button(w, L["Buy bank slot"], 130, 22)
         w.buy:SetScript("OnClick", function()
-            local num = GetNumBankSlots and GetNumBankSlots() or 0
-            local cost = GetBankSlotCost and GetBankSlotCost(num) or 0
+            local _, _, cost = BankSlots()
             StaticPopup_Show("ALLINONE_BUY_BANKSLOT", L["Buy a bank bag slot for %s?"]:format(AIO.Money(cost)))
         end)
         w.buy:Hide()
     end,
     Update = function(w)
-        local show = false
-        if BankLive(w) and GetNumBankSlots then
-            local _, full = GetNumBankSlots()
-            show = not full
+        local live = BankLive(w)
+        local num, full = BankSlots()
+        local anySlot = false
+        for i, b in ipairs(w.bagSlots) do
+            local inv = live and BankBagInv(b.bag)
+            if inv then
+                anySlot = true
+                b.locked = i > num
+                b.icon:SetTexture(GetInventoryItemTexture("player", inv) or "Interface\\PaperDoll\\UI-PaperDoll-Slot-Bag")
+                b.lock:SetShown(b.locked)
+                b:Show()
+            else
+                b:Hide()
+            end
         end
-        w.buy:SetShown(show)
-        w.extra = show and 24 or 0
+        local buy = live and not full
+        w.buy:ClearAllPoints()
+        if anySlot then
+            w.buy:SetPoint("LEFT", w.bagSlots[#w.bagSlots], "RIGHT", 8, 0)
+        else
+            w.buy:SetPoint("BOTTOMLEFT", 12, 40)
+        end
+        w.buy:SetShown(buy)
+        w.extra = (anySlot or buy) and 32 or 0
     end,
     extraHeight = function(w) return w.extra or 0 end,
     OnHide = function(w)
