@@ -589,7 +589,7 @@ function AIO:BankOpened()
     if self.atBank then return end
     self.atBank = true
     self:ScanBank()
-    if not self.settings.replaceBank then return end
+    if ns.noBank or not self.settings.replaceBank then return end
     self:Ghost(_G.BankFrame)
     local w = self.windows.bank
     w.owner = nil
@@ -870,7 +870,7 @@ SlashCmdList.ALLINONE = function(msg)
         AIO:OpenOptions()
     elseif cmd == "" or cmd == "bags" then
         AIO:Toggle("inventory")
-    elseif cmd == "bank" then
+    elseif cmd == "bank" and not ns.noBank then
         AIO:Toggle("bank")
     elseif cmd == "guild" then
         AIO:Toggle("guild")

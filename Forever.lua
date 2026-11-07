@@ -6,7 +6,10 @@ ns.title  = "AllInOneForever"
 ns.skin   = "modern"   -- Blizzard's modern bag look
 ns.ui     = "blizzard" -- every window drawn in the modern Blizzard look (as in AllInOne)
 ns.dbName = "AllInOneForeverDB"
-ns.defaults = { replaceBags = true, replaceBank = true, replaceGuild = true, tooltipCounts = false,
+-- No bank window of our own: Forever's bank (with its bank tabs) stays
+-- Blizzard's. What lies in the bank is still noted for tooltips and counts.
+ns.noBank = true
+ns.defaults = { replaceBags = true, replaceBank = false, replaceGuild = true, tooltipCounts = false,
                 showKeyring = false }   -- Blizzard's Forever bags leave the keyring out
 -- Applied once to existing saved settings too (they were saved as "off" before).
-ns.resetOnce = { showKeyring = false, replaceBags = true, replaceBank = true, replaceGuild = true }
+ns.resetOnce = { showKeyring = false, replaceBags = true, replaceGuild = true }

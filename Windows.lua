@@ -145,7 +145,7 @@ local keyButton = AIO.KEYRING and {
 } or nil
 
 local inventory = {
-    headerButtons = { bankButton, keyButton },
+    headerButtons = ns.noBank and { keyButton } or { bankButton, keyButton },
     Owners = CharacterMenu,
     IsLive = function(w) return IsMe(w) end,
     CanSort = function(w) return IsMe(w) end,
@@ -524,7 +524,7 @@ local guild = {
 
 function AIO:CreateWindows()
     self:CreateWindow("inventory", inventory)
-    self:CreateWindow("bank", bank)
+    if not ns.noBank then self:CreateWindow("bank", bank) end
     self:CreateWindow("guild", guild)
     -- The bank button in the bags is lit exactly while the bank window is
     -- open, however it is opened or closed.

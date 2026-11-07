@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.23.0
+- WoW Forever: no own bank window any more – the bank with its bank tabs is Blizzard's again. Bags and guild bank stay. What lies in the bank is still noted for item counts.
+
 ## 2.22.1
 - Bank (WoW Forever): bank tabs are recognised (all nine). "Buy bank tab" brings Blizzard's own bank window up next to ours, because only Blizzard's button may buy a tab; it goes away again by itself once the tab is bought. No more blocked-action message.
 

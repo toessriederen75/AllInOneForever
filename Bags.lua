@@ -86,6 +86,12 @@ local general = {
         end
     end },
 }
+-- Forever keeps Blizzard's bank: no setting for it.
+if ns.noBank then
+    for i = #general, 1, -1 do
+        if general[i].label == L["Replace the default bank"] then table.remove(general, i) end
+    end
+end
 
 local function WindowOptions(id, extra)
     local list = { { type = "header", label = L["Layout"] } }
@@ -119,14 +125,14 @@ AIO:NewModule("bagsInventory", {
     }),
 })
 
-AIO:NewModule("bagsBank", {
+if not ns.noBank then AIO:NewModule("bagsBank", {
     title = L["Bank"],
     short = L["Columns and size of the bank window."],
     desc = L["Opens by itself at a banker; elsewhere it shows the bank as last seen. /aio bank"],
     category = "bags",
     alwaysOn = true,
     options = WindowOptions("bank"),
-})
+}) end
 
 AIO:NewModule("bagsGuild", {
     title = L["Guild Bank"],
