@@ -14,6 +14,8 @@ if GetLocale() == "deDE" then
     L["%s's bank"]            = "Bank von %s"
     L["(offline)"]            = "(offline)"
     L["Search"]               = "Suchen"
+    L["Search all settings"]  = "Alle Einstellungen durchsuchen"
+    L["Nothing found."]       = "Nichts gefunden."
     L["Sort"]                 = "Sortieren"
     L["Sorting..."]           = "Sortiere ..."
     L["Sorted."]              = "Sortiert."

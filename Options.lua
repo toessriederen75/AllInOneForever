@@ -219,6 +219,25 @@ local function ModulesOf(catKey)
     return list
 end
 
+--- Everything a module can be found by in the search: its title, texts and
+--- the labels and descriptions of its options. Built once per module.
+local searchText = {}
+local function SearchText(m)
+    local t = searchText[m.key]
+    if t then return t end
+    local parts = { m.title or m.key, m.short or "", m.desc or "" }
+    local cat
+    for _, c in ipairs(AIO.categories) do if c.key == m.category then cat = c end end
+    if cat then parts[#parts + 1] = cat.label or "" end
+    for _, e in ipairs(m.options or {}) do
+        if type(e.label) == "string" then parts[#parts + 1] = e.label end
+        if type(e.desc) == "string" then parts[#parts + 1] = e.desc end
+    end
+    t = table.concat(parts, " "):lower()
+    searchText[m.key] = t
+    return t
+end
+
 --- A grouped section's front page: every helper as a tick box under its
 --- group, groups spread over two columns. Pointing at a helper tells what it
 --- does; the gear next to it opens its settings.
@@ -491,15 +510,20 @@ local function Build()
     sep:SetPoint("BOTTOMLEFT", nav, "BOTTOMRIGHT")
     sep:SetWidth(1)
 
-    local search = Style.Edit(nav, NAV_W - 20, L["Search"])
-    search:SetPoint("TOPLEFT", 10, -10)
+    -- Search over everything (every tab, every helper and its settings), in
+    -- the title bar left of "Reload UI".
+    local search = Style.Edit(panel.titleBar, 200, L["Search all settings"])
+    search:SetHeight(20)
+    search:SetPoint("RIGHT", reload, "LEFT", -10, 0)
     search:SetScript("OnTextChanged", function(self)
-        panel.filter = self:GetText():lower()
+        panel.filter = strtrim(self:GetText() or ""):lower()
         panel:RefreshNav()
     end)
+    search:SetScript("OnEscapePressed", function(self) self:SetText(""); self:ClearFocus() end)
+    panel.search = search
 
     local navScroll = Style.Scroll(nav)
-    navScroll:SetPoint("TOPLEFT", 0, -40)
+    navScroll:SetPoint("TOPLEFT", 0, -8)
     navScroll:SetPoint("BOTTOMRIGHT", -8, 8)
     panel.navScroll = navScroll
     panel.navRows = {}
@@ -589,15 +613,47 @@ local function Build()
             y = y + row:GetHeight()
         end
 
+        -- Searching: hits from every tab, under the tab's name.
+        if filter then
+            local any = false
+            for _, sd in ipairs(AIO.sections) do
+                local headerAdded = false
+                for _, cat in ipairs(AIO.categories) do
+                    if cat.section == sd.key then
+                        for _, key in ipairs(AIO.moduleOrder) do
+                            local m = AIO.modules[key]
+                            if m.category == cat.key and SearchText(m):find(filter, 1, true) then
+                                if not headerAdded then
+                                    y = y + 6
+                                    add(nil, (sd.label or sd.key):upper(), true)
+                                    headerAdded = true
+                                end
+                                add(key, m.title or key, false, m.alwaysOn and nil or (m.db and m.db.enabled))
+                                any = true
+                            end
+                        end
+                    end
+                end
+            end
+            if not any then
+                y = y + 6
+                add(nil, L["Nothing found."], true)
+            end
+            for j = i + 1, #self.navRows do self.navRows[j]:Hide() end
+            navScroll.child:SetHeight(y + 10)
+            navScroll:UpdateRange()
+            return
+        end
+
         local section = self.section
         local secDef
         for _, sd in ipairs(AIO.sections) do if sd.key == section then secDef = sd end end
-        if not filter and not (secDef and secDef.noOverview) then
+        if not (secDef and secDef.noOverview) then
             add("__overview:" .. section, L["Overview"], false, nil)
         end
         -- Grouped section, no search: the groups, and only the open one shows
         -- its helpers underneath.
-        if secDef and secDef.grouped and not filter then
+        if secDef and secDef.grouped then
             local sel = self.selected
             local openCat = sel and (sel:match("^__cat:(.+)$") or (AIO.modules[sel] and AIO.modules[sel].category))
             for _, cat in ipairs(AIO.categories) do
@@ -634,15 +690,12 @@ local function Build()
                 local m = AIO.modules[key]
                 if m.category == cat.key and cat.section == section then
                     local title = m.title or key
-                    local hay = (title .. " " .. (m.desc or "")):lower()
-                    if not filter or hay:find(filter, 1, true) then
-                        if not headerAdded then
-                            y = y + 6
-                            if not cat.hideHeader then add(nil, cat.label, true) end
-                            headerAdded = true
-                        end
-                        add(key, title, false, m.alwaysOn and nil or (m.db and m.db.enabled))
+                    if not headerAdded then
+                        y = y + 6
+                        if not cat.hideHeader then add(nil, cat.label, true) end
+                        headerAdded = true
                     end
+                    add(key, title, false, m.alwaysOn and nil or (m.db and m.db.enabled))
                 end
             end
         end

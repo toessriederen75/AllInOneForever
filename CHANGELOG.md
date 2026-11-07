@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.19.0
+- Options: one search box at the top right that searches everything – every tab, every helper and the names and descriptions of all their settings. Hits are listed under their tab; Esc clears the search.
+
 ## 2.18.3
 - Glow on new items: works again in WoW Forever. Uses the game's own list of new items, so everything you just got (looted, bought, traded, mailed) shines, except junk; pointing at it or closing the bags takes the glow away.
 
