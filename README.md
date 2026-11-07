@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/assets/icon.png" width="128" alt="AllInOneForever icon"></p>
+
 # AllInOneForever
 
 **Bags, bank and everyday helpers in one addon – for WoW Forever.**
