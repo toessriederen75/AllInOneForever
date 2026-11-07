@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.24.0
+- WoW Forever: Blizzard's bag functions are no longer replaced but only followed. Replacing them "tainted" Blizzard's interface, so the game blocked actions such as buying a bank tab or using some items from the bags.
+
 ## 2.23.0
 - WoW Forever: no own bank window any more – the bank with its bank tabs is Blizzard's again. Bags and guild bank stay. What lies in the bank is still noted for item counts.
 

@@ -464,6 +464,14 @@ AIO.windows = {}
 function AIO:Show(id, requester)
     local w = self.windows[id]
     if not w then return end
+    -- Modern clients: Blizzard's bags are the truth (see HookBlizzardBags);
+    -- opening ours opens theirs (hidden), and the hook shows ours.
+    if id == "inventory" and self.bagMirror and not self.bagMirror.syncing and not self.bagMirror.open() then
+        w.openedBy = requester
+        OpenAllBags()
+        if not w:IsShown() then w:Show() end
+        return true
+    end
     if not w:IsShown() then
         w.openedBy = requester
         w:Show()
@@ -482,6 +490,10 @@ end
 function AIO:Toggle(id)
     local w = self.windows[id]
     if not w then return end
+    if id == "inventory" and self.bagMirror then
+        if w:IsShown() then w:Hide() else w.owner = nil; self:Show(id) end
+        return
+    end
     if w:IsShown() then
         w:Hide()
     else
@@ -519,6 +531,9 @@ end
 
 function AIO:HookBlizzardBags()
     if not self.settings.replaceBags then return end
+    if hooksecurefunc and (_G.ContainerFrameCombinedBags or _G.ContainerFrame1) and C_Container then
+        return self:MirrorBlizzardBags()
+    end
     local orig = {}
     for _, name in ipairs({ "ToggleBag", "OpenBag", "CloseBag" }) do orig[name] = _G[name] end
 
@@ -546,6 +561,63 @@ function AIO:HookBlizzardBags()
         if inventoryBag(id) then AIO:Hide("inventory")
         elseif orig.CloseBag then orig.CloseBag(id, ...) end
     end
+end
+
+--- Modern clients (WoW Forever): Blizzard's own functions are not replaced
+--- (that taints them, and the game then blocks things like buying a bank
+--- tab or using an item). Blizzard's bag frames keep working, parented to a
+--- hidden frame; ours simply follows whether they are open.
+function AIO:MirrorBlizzardBags()
+    local hidden = CreateFrame("Frame")
+    hidden:Hide()
+    local frames = {}
+    if _G.ContainerFrameCombinedBags then frames[#frames + 1] = _G.ContainerFrameCombinedBags end
+    for i = 1, (_G.NUM_CONTAINER_FRAMES or 13) do
+        local f = _G["ContainerFrame" .. i]
+        if f then frames[#frames + 1] = f end
+    end
+    for _, f in ipairs(frames) do f:SetParent(hidden) end
+
+    local mirror = {}
+    function mirror.open()
+        for _, f in ipairs(frames) do
+            if f:IsShown() then return true end
+        end
+        return false
+    end
+    local function sync()
+        if mirror.syncing then return end
+        mirror.syncing = true
+        local w = AIO.windows.inventory
+        if w then
+            if mirror.open() then
+                if not w:IsShown() then w.owner = nil; w:Show() end
+            elseif w:IsShown() then
+                w:Hide()
+            end
+        end
+        mirror.syncing = false
+    end
+    for _, name in ipairs({ "ToggleAllBags", "ToggleBackpack", "OpenAllBags", "OpenBackpack",
+                            "CloseAllBags", "CloseBackpack", "ToggleBag", "OpenBag", "CloseBag" }) do
+        if type(_G[name]) == "function" then hooksecurefunc(name, sync) end
+    end
+    for _, f in ipairs(frames) do
+        f:HookScript("OnShow", sync)
+        f:HookScript("OnHide", sync)
+    end
+    -- Closing our window closes Blizzard's too.
+    local w = self.windows.inventory
+    if w then
+        w:HookScript("OnHide", function()
+            if not mirror.syncing and mirror.open() then
+                mirror.syncing = true
+                CloseAllBags()
+                mirror.syncing = false
+            end
+        end)
+    end
+    self.bagMirror = mirror
 end
 
 -- ---------------------------------------------------------------------------
