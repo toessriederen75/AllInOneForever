@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.17.0
+- Bag, bank and guild bank windows: new header symbols (sort, options, bank, keyring, character) as plain pale-gold line icons that glow under the mouse and while active.
+
 ## 2.16.0
 - Bags: a bank button in the header opens the bank of the same character (live at a banker, otherwise as last seen); it stays lit while the bank is open.
 

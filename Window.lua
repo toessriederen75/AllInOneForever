@@ -106,6 +106,18 @@ local function IconButton(parent, icon, tip, onClick)
 end
 AIO.IconButton = IconButton
 
+--- Header buttons of the windows: plain line symbols (Media\ui\glyph_*).
+local function HeaderButton(parent, glyph, tip, onClick)
+    return Style.Glyph(parent, glyph, 22, tip, onClick)
+end
+
+--- A header button from a window definition's list: a symbol (`glyph`) or,
+--- for older entries, an icon texture.
+local function DefButton(parent, hb, onClick)
+    if hb.glyph then return HeaderButton(parent, hb.glyph, hb.tip, onClick) end
+    return IconButton(parent, hb.icon, hb.tip, onClick)
+end
+
 local function SideButton(parent, icon, tip, onClick)
     local b = Style.Icon(parent, icon, 30, tip, onClick)
     -- Kept for the windows: SetChecked marks the chosen filter or tab.
@@ -137,46 +149,30 @@ local function ModernChrome(f, id, def)
     -- Right of the search box: sort, options, character.
     local x = -10
     if def.CanSort then
-        local b = CreateFrame("Button", nil, f)
-        b:SetSize(28, 26)
-        if AtlasOK("bags-button-autosort-up") then
-            b:SetNormalAtlas("bags-button-autosort-up")
-            b:SetPushedAtlas("bags-button-autosort-down")
-        else
-            b:SetNormalTexture("Interface\\Icons\\Ability_Rogue_Sprint")
-        end
-        b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
-        b:SetPoint("TOPRIGHT", x, -31)
-        b:SetScript("OnClick", function() AIO:Sort(id) end)
-        b:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:SetText(L["Sort"])
-            GameTooltip:Show()
-        end)
-        b:SetScript("OnLeave", GameTooltip_Hide)
-        f.sortButton = b
-        x = x - 30
+        f.sortButton = HeaderButton(f, "sort", L["Sort"], function() AIO:Sort(id) end)
+        f.sortButton:SetPoint("TOPRIGHT", x, -33)
+        x = x - 28
     end
-    f.optionsButton = IconButton(f, "Interface\\Icons\\Trade_Engineering", L["Options"],
+    f.optionsButton = HeaderButton(f, "gear", L["Options"],
         function() AIO:OpenOptions(AIO.windowPages and AIO.windowPages[id] or "bags") end)
     f.optionsButton:SetPoint("TOPRIGHT", x, -33)
-    x = x - 26
+    x = x - 28
     for _, hb in ipairs(def.headerButtons or {}) do
-        local b = IconButton(f, hb.icon, hb.tip, function() hb.click(f) end)
+        local b = DefButton(f, hb, function() hb.click(f) end)
         b:SetPoint("TOPRIGHT", x, -33)
         b.def = hb
         f.headerButtons = f.headerButtons or {}
         f.headerButtons[#f.headerButtons + 1] = b
-        x = x - 26
+        x = x - 28
     end
     if def.Owners then
-        f.ownerButton = IconButton(f, "Interface\\Icons\\INV_Misc_Head_Human_01",
+        f.ownerButton = HeaderButton(f, "char",
             def.ownerTip or L["Choose character"], function(self)
                 local items = def.Owners(f)
                 if items and #items > 0 then AIO:OpenMenu(self, items) end
             end)
         f.ownerButton:SetPoint("TOPRIGHT", x, -33)
-        x = x - 26
+        x = x - 28
     end
 
     f.search = CreateFrame("EditBox", nil, f, "SearchBoxTemplate")
@@ -209,31 +205,30 @@ local function DrawnChrome(f, id, def)
     -- Right of the search box: sort, options, character.
     local x = -10
     if def.CanSort then
-        f.sortButton = IconButton(f, "Interface\\Icons\\Ability_Rogue_Sprint", L["Sort"],
-            function() AIO:Sort(id) end)
+        f.sortButton = HeaderButton(f, "sort", L["Sort"], function() AIO:Sort(id) end)
         f.sortButton:SetPoint("TOPRIGHT", x, -35)
-        x = x - 26
+        x = x - 28
     end
-    f.optionsButton = IconButton(f, "Interface\\Icons\\Trade_Engineering", L["Options"],
+    f.optionsButton = HeaderButton(f, "gear", L["Options"],
         function() AIO:OpenOptions(AIO.windowPages and AIO.windowPages[id] or "bags") end)
     f.optionsButton:SetPoint("TOPRIGHT", x, -35)
-    x = x - 26
+    x = x - 28
     for _, hb in ipairs(def.headerButtons or {}) do
-        local b = IconButton(f, hb.icon, hb.tip, function() hb.click(f) end)
+        local b = DefButton(f, hb, function() hb.click(f) end)
         b:SetPoint("TOPRIGHT", x, -35)
         b.def = hb
         f.headerButtons = f.headerButtons or {}
         f.headerButtons[#f.headerButtons + 1] = b
-        x = x - 26
+        x = x - 28
     end
     if def.Owners then
-        f.ownerButton = IconButton(f, "Interface\\Icons\\INV_Misc_Head_Human_01",
+        f.ownerButton = HeaderButton(f, "char",
             def.ownerTip or L["Choose character"], function(self)
                 local items = def.Owners(f)
                 if items and #items > 0 then AIO:OpenMenu(self, items) end
             end)
         f.ownerButton:SetPoint("TOPRIGHT", x, -35)
-        x = x - 26
+        x = x - 28
     end
 
     -- Search box with the magnifier, like the backpack's.

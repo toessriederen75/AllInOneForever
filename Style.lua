@@ -488,6 +488,65 @@ function FlatButton(parent, text, width, height, onClick)
 end
 
 --- A square icon button with a 1px border, for headers and side bars.
+--- A plain line symbol without a background (the header buttons of the bag
+--- windows): pale gold, brighter with a soft golden glow under the mouse or
+--- while active. `glyph` is a name from Media\ui\glyph_<name>.
+local GLYPH_DIR = "Interface\\AddOns\\" .. ADDON .. "\\Media\\ui\\glyph_"
+local GLYPH_IDLE, GLYPH_LIT = { 0.91, 0.81, 0.56 }, { 1, 0.92, 0.66 }
+
+function Style.Glyph(parent, glyph, size, tip, onClick)
+    size = size or 22
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(size, size)
+    b.glow = b:CreateTexture(nil, "BACKGROUND")
+    b.glow:SetTexture(GLYPH_DIR .. "glow")
+    b.glow:SetPoint("CENTER")
+    b.glow:SetSize(size * 1.5, size * 1.5)
+    b.glow:SetVertexColor(1, 0.83, 0.42, 0.45)
+    b.glow:Hide()
+    b.shadow = b:CreateTexture(nil, "ARTWORK", nil, 0)
+    b.shadow:SetTexture(GLYPH_DIR .. glyph)
+    b.shadow:SetPoint("TOPLEFT", 1, -2)
+    b.shadow:SetPoint("BOTTOMRIGHT", 1, -2)
+    b.shadow:SetVertexColor(0, 0, 0, 0.85)
+    b.icon = b:CreateTexture(nil, "ARTWORK", nil, 1)
+    b.icon:SetTexture(GLYPH_DIR .. glyph)
+    b.icon:SetAllPoints()
+    b.icon:SetVertexColor(unpack(GLYPH_IDLE))
+    b.tip = tip
+    local function paint(self)
+        local lit = self.active or self.hover
+        self.glow:SetShown(lit and true or false)
+        self.icon:SetVertexColor(unpack(lit and GLYPH_LIT or GLYPH_IDLE))
+    end
+    b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    b:SetScript("OnClick", function(self, button)
+        if onClick then onClick(self, button) end
+    end)
+    b:SetScript("OnMouseDown", function(self) self.icon:SetPoint("TOPLEFT", 1, -1); self.icon:SetPoint("BOTTOMRIGHT", 1, -1) end)
+    b:SetScript("OnMouseUp", function(self) self.icon:ClearAllPoints(); self.icon:SetAllPoints() end)
+    b:SetScript("OnEnter", function(self)
+        self.hover = true
+        paint(self)
+        local text = type(self.tip) == "function" and self.tip(self) or self.tip
+        if text then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(text, 1, 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end)
+    b:SetScript("OnLeave", function(self)
+        self.hover = false
+        paint(self)
+        GameTooltip_Hide()
+    end)
+    function b:SetActive(active)
+        self.active = active and true or false
+        paint(self)
+    end
+    return b
+end
+
 function Style.Icon(parent, icon, size, tip, onClick)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(size or 22, size or 22)
