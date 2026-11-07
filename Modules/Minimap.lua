@@ -39,8 +39,8 @@ local M = AIO:NewModule("minimap", {
     },
 })
 
-local ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\logo"   -- the AIO monogram
--- Blizzard look: a version drawn for the small minimap size (big letters, no ring).
+local ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\logo"   -- the AllInOne crest
+-- Blizzard look: a version drawn for the small minimap size (bigger crest, no ring).
 if AIO.Style.blizzard then ICON = ICON .. "_minimap" end
 local MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
 local SIZE = 31     -- the size every classic minimap button has

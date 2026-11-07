@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.14.2
+- New logo: the AllInOne crest (bag, gold, quest scroll and cogwheel) in the addon list, the options window and on the minimap button.
+
 ## 2.14.1
 - Releases now carry a release.json that marks them for WoW Forever (for WowUp Hub).
 
