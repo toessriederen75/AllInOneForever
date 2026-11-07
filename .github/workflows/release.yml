@@ -1,10 +1,14 @@
-# Builds the addon zip and publishes a GitHub release whenever a version tag
-# (v2.14.0, v2.14.1, ...) is pushed. WowUp Hub picks the release up by itself.
+# Builds the addon zip and attaches it to a GitHub release as soon as the
+# release is published (tag v2.14.0, v2.14.1, ...). WowUp Hub picks the
+# release up by itself.
+#
+# New version: add it to CHANGELOG.md, then on GitHub "Releases" -> "Draft a
+# new release" -> tag "v<version>" -> Publish. Everything else happens here.
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -16,10 +20,13 @@ jobs:
       ADDON: AllInOneForever
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Build zip
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
           mkdir -p "build/$ADDON"
           git archive --format=tar HEAD | tar -x -C "build/$ADDON"
           sed -i "s/^## Version:.*/## Version: $VERSION/" "build/$ADDON/$ADDON.toc"
@@ -27,13 +34,16 @@ jobs:
           cp "build/$ADDON/$ADDON.toc" "build/$ADDON/${ADDON}_Forever.toc"
           (cd build && zip -qr "$ADDON-$VERSION.zip" "$ADDON")
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Release notes from CHANGELOG.md
         run: |
           awk -v v="$VERSION" '$0 ~ "^## " {p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
           [ -s notes.md ] || echo "Version $VERSION" > notes.md
 
-      - name: Publish release
+      - name: Attach zip and notes to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" "build/$ADDON-$VERSION.zip" --title "$ADDON $VERSION" --notes-file notes.md
+        run: |
+          gh release upload "$TAG" "build/$ADDON-$VERSION.zip" --clobber
+          gh release edit "$TAG" --title "$ADDON $VERSION" --notes-file notes.md
