@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.21.0
+- Travel routes: every WoW Forever boat and zeppelin, with the exact dock positions – Stormwind Harbor, the Menethil–Southshore–Auberdine round trip (one way), Steamwheedle Port–Powderfuse Port, Zephras Isle from Dalaran and Skywatcher Plateau, Feathermoon, and the classic routes.
+
 ## 2.20.2
 - Travel routes: Feathermoon ferry, and the WoW Forever routes from Skywatcher Plateau and Dalaran to Valanaar. /aio map here prints your map and position.
 

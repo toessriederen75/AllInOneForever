@@ -33,6 +33,7 @@ Written by Arthur. All code, pictures and sounds were made for this addon. Ideas
 - **Nova Spell Rank Checker** by Venomisto – the idea of checking spell ranks on the bars.
 - **Leatrix Plus** by Leatrix – ideas for larger Blizzard windows and small automations.
 - **Bagnon** by Jaliborc – the idea of one combined bag window.
+- **Leatrix Maps** by Leatrix – the idea of travel points on the map, and the positions of the WoW Forever docks.
 
 ## License
 

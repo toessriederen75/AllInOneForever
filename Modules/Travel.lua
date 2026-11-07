@@ -42,6 +42,11 @@ if GetLocale() == "deDE" then
     L["Skywatcher Plateau"]    = "Himmelswacht-Plateau"
     L["Dalaran"]               = "Dalaran"
     L["Valanaar (Zephras Isle)"] = "Valanaar (Zephras-Insel)"
+    L["Southshore"]            = "Süderstade"
+    L["Stormwind Harbor"]      = "Hafen von Sturmwind"
+    L["Steamwheedle Port"]     = "Dampfdruckpier"
+    L["Powderfuse Port"]       = "Powderfuse Port"
+    L["one way"]               = "nur in eine Richtung"
 end
 
 local M = AIO:NewModule("travel", {
@@ -78,6 +83,11 @@ local ZONE = {
     feralas       = { 1444, "feralas" },
     mulgore       = { 1412, "mulgore" },
     alterac       = { 1416, "alterac mountains", "alteracgebirge" },
+    hillsbrad     = { 1424, "hillsbrad foothills", "vorgebirge des hügellands" },
+    stormwind     = { 1453, "stormwind city", "sturmwind" },
+    tanaris       = { 1446, "tanaris" },
+    riverglades   = { 2548, "riverglades" },
+    zephras       = { 2521, "zephras isle" },
 }
 local WETLANDS, DARKSHORE, DUSTWALLOW, TELDRASSIL = "wetlands", "darkshore", "dustwallow", "teldrassil"
 local STRANGLETHORN, BARRENS, DUROTAR, TIRISFAL = "stranglethorn", "barrens", "durotar", "tirisfal"
@@ -102,7 +112,7 @@ local function Resolve()
     resolved = {}
     local all
     for key, z in pairs(ZONE) do
-        if Matches(NameOf(z[1]), z) then
+        if NameOf(z[1]) then
             resolved[key] = z[1]
         else
             if not all then
@@ -124,28 +134,41 @@ local function ZoneID(e)
     return Resolve()[e[1]]
 end
 
+-- Dock positions as in WoW Forever (positions taken from Leatrix Maps by
+-- Leatrix, who placed them first; the code here is our own).
 local ROUTES = {
+    -- Alliance boats. Menethil, Southshore and Auberdine are one round trip
+    -- in one direction only.
+    { kind = "boat", faction = "Alliance", oneway = true,
+      { WETLANDS, 0.045, 0.567, L["Menethil Harbor"] }, { "hillsbrad", 0.507, 0.704, L["Southshore"] } },
+    { kind = "boat", faction = "Alliance", oneway = true,
+      { "hillsbrad", 0.507, 0.704, L["Southshore"] }, { DARKSHORE, 0.323, 0.441, L["Auberdine"] } },
+    { kind = "boat", faction = "Alliance", oneway = true,
+      { DARKSHORE, 0.323, 0.441, L["Auberdine"] }, { WETLANDS, 0.045, 0.567, L["Menethil Harbor"] } },
     { kind = "boat", faction = "Alliance",
-      { WETLANDS, 0.0466, 0.5713, L["Menethil Harbor"] }, { DARKSHORE, 0.3243, 0.4382, L["Auberdine"] } },
+      { WETLANDS, 0.047, 0.638, L["Menethil Harbor"] }, { DUSTWALLOW, 0.717, 0.567, L["Theramore"] } },
     { kind = "boat", faction = "Alliance",
-      { WETLANDS, 0.0503, 0.6347, L["Menethil Harbor"] }, { DUSTWALLOW, 0.7180, 0.5640, L["Theramore"] } },
+      { DARKSHORE, 0.333, 0.398, L["Auberdine"] }, { TELDRASSIL, 0.548, 0.972, L["Rut'theran Village"] } },
     { kind = "boat", faction = "Alliance",
-      { DARKSHORE, 0.3309, 0.4014, L["Auberdine"] }, { TELDRASSIL, 0.5510, 0.9480, L["Rut'theran Village"] } },
+      { DARKSHORE, 0.305, 0.409, L["Auberdine"] }, { "stormwind", 0.218, 0.569, L["Stormwind Harbor"] } },
+    { kind = "boat", faction = "Alliance",
+      { "feralas", 0.310, 0.395, L["Feathermoon Stronghold"] }, { "feralas", 0.431, 0.428, L["The Forgotten Coast"] } },
+    { kind = "boat", faction = "Alliance",
+      { "alterac", 0.128, 0.512, L["Dalaran"] }, { "zephras", 0.658, 0.838, L["Valanaar (Zephras Isle)"] } },
+    -- Neutral boats
     { kind = "boat", faction = "Neutral",
-      { STRANGLETHORN, 0.2589, 0.7310, L["Booty Bay"] }, { BARRENS, 0.6370, 0.3860, L["Ratchet"] } },
+      { STRANGLETHORN, 0.257, 0.731, L["Booty Bay"] }, { BARRENS, 0.638, 0.388, L["Ratchet"] } },
+    { kind = "boat", faction = "Neutral",
+      { "tanaris", 0.686, 0.230, L["Steamwheedle Port"] }, { "riverglades", 0.806, 0.546, L["Powderfuse Port"] } },
+    -- Horde zeppelins
     { kind = "zeppelin", faction = "Horde",
-      { DUROTAR, 0.5090, 0.1380, L["Orgrimmar"] }, { TIRISFAL, 0.6070, 0.5880, L["Undercity"] } },
+      { DUROTAR, 0.510, 0.139, L["Orgrimmar"] }, { TIRISFAL, 0.606, 0.589, L["Undercity"] } },
     { kind = "zeppelin", faction = "Horde",
-      { DUROTAR, 0.5060, 0.1260, L["Orgrimmar"] }, { STRANGLETHORN, 0.3150, 0.2970, L["Grom'gol Base Camp"] } },
+      { DUROTAR, 0.505, 0.127, L["Orgrimmar"] }, { STRANGLETHORN, 0.312, 0.304, L["Grom'gol Base Camp"] } },
     { kind = "zeppelin", faction = "Horde",
-      { TIRISFAL, 0.6190, 0.5900, L["Undercity"] }, { STRANGLETHORN, 0.3160, 0.3020, L["Grom'gol Base Camp"] } },
-    { kind = "boat", faction = "Alliance",
-      { "feralas", 0.3110, 0.3970, L["Feathermoon Stronghold"] }, { "feralas", 0.4330, 0.4280, L["The Forgotten Coast"] } },
-    -- WoW Forever: to Valanaar on Zephras Isle, which has no place on the map.
+      { TIRISFAL, 0.619, 0.589, L["Undercity"] }, { STRANGLETHORN, 0.315, 0.291, L["Grom'gol Base Camp"] } },
     { kind = "zeppelin", faction = "Horde",
-      { "mulgore", 0.3430, 0.2580, L["Skywatcher Plateau"] }, { nil, 0, 0, L["Valanaar (Zephras Isle)"] } },
-    { kind = "zeppelin", faction = "Neutral",
-      { "alterac", 0.1250, 0.5180, L["Dalaran"] }, { nil, 0, 0, L["Valanaar (Zephras Isle)"] } },
+      { "mulgore", 0.343, 0.261, L["Skywatcher Plateau"] }, { "zephras", 0.577, 0.810, L["Valanaar (Zephras Isle)"] } },
 }
 
 local ICON = {
@@ -208,6 +231,7 @@ local function PinTooltip(pin)
     GameTooltip:AddLine(pin.here, 1, 0.82, 0)
     for _, t in ipairs(pin.trips) do
         local line = (t.kind == "boat" and L["Boat to %s"] or L["Zeppelin to %s"]):format(t.to)
+        if t.oneway then line = line .. " (" .. L["one way"] .. ")" end
         local c = LINE_COLOR[t.faction]
         GameTooltip:AddDoubleLine(line, L[t.faction], 1, 1, 1, c[1], c[2], c[3])
     end
@@ -281,7 +305,7 @@ function M:Refresh()
             if Wanted(r) then
                 local ax, ay = MapPos(r[1], mapID)
                 local bx, by = MapPos(r[2], mapID)
-                for side = 1, 2 do
+                for side = 1, r.oneway and 1 or 2 do
                     local e, x, y = r[side], side == 1 and ax or bx, side == 1 and ay or by
                     if x then
                         local other = r[side == 1 and 2 or 1]
@@ -297,7 +321,7 @@ function M:Refresh()
                             p:Show()
                             byPlace[key] = p
                         end
-                        p.trips[#p.trips + 1] = { kind = r.kind, faction = r.faction, to = other[4] }
+                        p.trips[#p.trips + 1] = { kind = r.kind, faction = r.faction, to = other[4], oneway = r.oneway }
                     end
                 end
                 if self.db.lines and ax and bx and ZoneID(r[1]) ~= mapID and ZoneID(r[2]) ~= mapID then
