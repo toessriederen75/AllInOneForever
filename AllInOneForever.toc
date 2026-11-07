@@ -1,0 +1,37 @@
+## Interface: 16001
+## Title: AllInOneForever
+## Notes: Bags, bank and everyday helpers in one addon (WoW Forever).
+## Notes-deDE: Taschen, Bank und viele Alltagshelfer in einem Addon (WoW Forever).
+## Author: Arthur
+## Version: 2.13.0
+## X-License: GPL-3.0
+## X-Category: Bags & Inventory
+## SavedVariables: AllInOneForeverDB
+## IconTexture: Interface\AddOns\AllInOneForever\Media\logo
+
+Forever.lua
+Compat.lua
+Locale.lua
+Core.lua
+Style.lua
+Data.lua
+Buttons.lua
+NewItems.lua
+Window.lua
+Windows.lua
+Sort.lua
+Options.lua
+Bags.lua
+
+Modules\Merchant.lua
+Modules\Quests.lua
+Modules\Buffs.lua
+Modules\Consumables.lua
+Modules\InfoBar.lua
+Modules\Tooltip.lua
+Modules\Minimap.lua
+Modules\ButtonBag.lua
+Modules\Comfort.lua
+Modules\Chat.lua
+Modules\SpellRanks.lua
+Modules\Gtfo.lua

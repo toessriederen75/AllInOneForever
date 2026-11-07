@@ -1,0 +1,39 @@
+# Builds the addon zip and publishes a GitHub release whenever a version tag
+# (v2.14.0, v2.14.1, ...) is pushed. WowUp Hub picks the release up by itself.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      ADDON: AllInOneForever
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build zip
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p "build/$ADDON"
+          git archive --format=tar HEAD | tar -x -C "build/$ADDON"
+          sed -i "s/^## Version:.*/## Version: $VERSION/" "build/$ADDON/$ADDON.toc"
+          # WoW Forever's own toc name, so updaters see the game version at once.
+          cp "build/$ADDON/$ADDON.toc" "build/$ADDON/${ADDON}_Forever.toc"
+          (cd build && zip -qr "$ADDON-$VERSION.zip" "$ADDON")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="$VERSION" '$0 ~ "^## " {p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
+          [ -s notes.md ] || echo "Version $VERSION" > notes.md
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "build/$ADDON-$VERSION.zip" --title "$ADDON $VERSION" --notes-file notes.md
