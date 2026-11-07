@@ -18,6 +18,13 @@ if GetLocale() == "deDE" then
     L["Stop"] = "Stopp"
     L["Takes money and items from every mail without cash on delivery."] = "Nimmt Geld und Gegenstände aus jeder Post ohne Nachnahme."
     L["Characters"] = "Charaktere"
+    L["Contacts"] = "Kontakte"
+    L["Saved contacts on the send page"] = "Gespeicherte Kontakte auf der Sendeseite"
+    L["Name to save"] = "Name speichern"
+    L["Save this name. Empty: takes the name in the \"To:\" field."] = "Diesen Namen speichern. Leer: übernimmt den Namen aus dem Feld «An:»."
+    L["Left click: fill in as recipient. Right click: remove."] = "Linksklick: als Empfänger eintragen. Rechtsklick: entfernen."
+    L["No contacts saved yet."] = "Noch keine Kontakte gespeichert."
+    L["Saved for all your characters."] = "Gilt für alle deine Charaktere."
     L["No other characters of your faction yet."] = "Noch keine anderen Charaktere deiner Fraktion."
     L["Surname not known yet. Log in with this character once and it is filled in with the whole name."] = "Nachname noch unbekannt. Einmal mit diesem Charakter einloggen, dann wird der ganze Name eingetragen."
     L["Mail: collected %s and %d item(s)."] = "Post: %s und %d Gegenstand/Gegenstände eingesammelt."
@@ -98,9 +105,11 @@ local Mail = AIO:NewModule("mail", {
     desc     = L["On the send page, a column with your other characters of the same faction on this realm fills in the recipient with one click. In the inbox, \"Open all\" takes the money and items from every mail without cash on delivery, one after another, until the bags are full."],
     category = "comfort",
     default  = true,
-    defaults = { altList = true, openAll = true, report = true },
+    defaults = { altList = true, contacts = true, contactList = {}, openAll = true, report = true },
     options  = {
         { type = "toggle", key = "altList", label = L["Characters on the send page"] },
+        { type = "toggle", key = "contacts", label = L["Saved contacts on the send page"], desc = L["Saved for all your characters."],
+          disabled = function(m) return not m.db.altList end },
         { type = "toggle", key = "openAll", label = L["\"Open all\" button in the inbox"] },
         { type = "toggle", key = "report",  label = L["Report collected gold"],
           disabled = function(m) return not m.db.openAll end },
@@ -140,35 +149,77 @@ function Mail:BuildAltList()
     f:SetFrameStrata("HIGH")
     f:EnableMouse(true)
     Style.Chrome(f)
-    f.title = Style.Text(f, 12, Style.blizzard and Style.gold or Style.color.accent)
+    local function heading(text)
+        local t = Style.Text(f, 12, Style.blizzard and Style.gold or Style.color.accent)
+        t:SetText(text)
+        return t
+    end
+    f.title = heading(L["Characters"])
     if Style.blizzard then f.title:SetPoint("TOP", 0, -10) else f.title:SetPoint("TOPLEFT", 8, -7) end
-    f.title:SetText(L["Characters"])
     f.empty = Style.Text(f, 11, Style.color.muted)
-    f.empty:SetPoint("TOPLEFT", Style.blizzard and 10 or 8, Style.blizzard and -38 or -26)
     f.empty:SetWidth(156)
     f.empty:SetWordWrap(true)
     f.empty:SetText(L["No other characters of your faction yet."])
     f.buttons = {}
+
+    -- Saved contacts: other players you send to often.
+    f.contactTitle = heading(L["Contacts"])
+    f.contactEmpty = Style.Text(f, 11, Style.color.muted)
+    f.contactEmpty:SetWidth(156)
+    f.contactEmpty:SetWordWrap(true)
+    f.contactEmpty:SetText(L["No contacts saved yet."])
+    f.contactButtons = {}
+    f.input = Style.Edit(f, 128, L["Name to save"])
+    f.add = Style.Button(f, "+", 24, 22, function() Mail:AddContact(f.input:GetText()) end)
+    f.add.tip = L["Save this name. Empty: takes the name in the \"To:\" field."]
+    f.input:SetScript("OnEnterPressed", function(self) Mail:AddContact(self:GetText()); self:ClearFocus() end)
+
     self.altFrame = f
     SendMailFrame:HookScript("OnShow", function() Mail:RefreshAltList() end)
+end
+
+local function FillRecipient(name)
+    if not SendMailNameEditBox then return end
+    SendMailNameEditBox:SetText(name)
+    if SendMailNameEditBox.ClearFocus then SendMailNameEditBox:ClearFocus() end
+    if SendMailSubjectEditBox and SendMailSubjectEditBox.SetFocus then SendMailSubjectEditBox:SetFocus() end
+end
+
+--- Saves a name (or, when empty, the name in the "To:" field) as a contact.
+function Mail:AddContact(name)
+    name = strtrim(name or "")
+    if name == "" and SendMailNameEditBox then name = strtrim(SendMailNameEditBox:GetText() or "") end
+    if name == "" then return end
+    local list = self.db.contactList
+    for _, n in ipairs(list) do
+        if n:lower() == name:lower() then return end
+    end
+    list[#list + 1] = name
+    table.sort(list, function(x, y) return x:lower() < y:lower() end)
+    if self.altFrame then self.altFrame.input:SetText("") end
+    self:RefreshAltList()
+end
+
+function Mail:RemoveContact(name)
+    local list = self.db.contactList
+    for i = #list, 1, -1 do
+        if list[i] == name then table.remove(list, i) end
+    end
+    self:RefreshAltList()
 end
 
 function Mail:RefreshAltList()
     local f = self.altFrame
     if not f then return end
     if not (self.enabled and self.db.altList) then f:Hide() return end
+    local x = Style.blizzard and 10 or 8
+    local y = Style.blizzard and -38 or -26
+
     local names = self:AltNames()
     for i, name in ipairs(names) do
         local b = f.buttons[i]
         if not b then
-            b = Style.Button(f, "", 156, 20, function(btn)
-                if SendMailNameEditBox then
-                    SendMailNameEditBox:SetText(btn.charName)
-                    if SendMailNameEditBox.ClearFocus then SendMailNameEditBox:ClearFocus() end
-                    if SendMailSubjectEditBox and SendMailSubjectEditBox.SetFocus then SendMailSubjectEditBox:SetFocus() end
-                end
-            end)
-            b:SetPoint("TOPLEFT", 8, (Style.blizzard and -38 or -26) - (i - 1) * 22)
+            b = Style.Button(f, "", 156, 20, function(btn) FillRecipient(btn.charName) end)
             f.buttons[i] = b
         end
         local c = AIO:CharData(name)
@@ -176,12 +227,62 @@ function Mail:RefreshAltList()
         b.charName = full or name
         b.tip = not full and L["Surname not known yet. Log in with this character once and it is filled in with the whole name."] or nil
         b:SetLabel(AIO.ClassColored(full or name, c and c.class))
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", 8, y)
         b:Show()
+        y = y - 22
     end
     for i = #names + 1, #f.buttons do f.buttons[i]:Hide() end
     f.empty:SetShown(#names == 0)
-    local rows = math.max(#names, 1)
-    f:SetHeight(26 + rows * 22 + (#names == 0 and 14 or 4) + (Style.blizzard and 18 or 0))
+    if #names == 0 then
+        f.empty:ClearAllPoints()
+        f.empty:SetPoint("TOPLEFT", x, y)
+        y = y - 32
+    end
+
+    local showContacts = self.db.contacts
+    f.contactTitle:SetShown(showContacts)
+    f.input:SetShown(showContacts)
+    f.add:SetShown(showContacts)
+    local contacts = showContacts and self.db.contactList or {}
+    if showContacts then
+        y = y - 8
+        f.contactTitle:ClearAllPoints()
+        if Style.blizzard then f.contactTitle:SetPoint("TOP", 0, y) else f.contactTitle:SetPoint("TOPLEFT", 8, y) end
+        y = y - 20
+    end
+    for i, name in ipairs(contacts) do
+        local b = f.contactButtons[i]
+        if not b then
+            b = Style.Button(f, "", 156, 20, function(btn, button)
+                if button == "RightButton" then Mail:RemoveContact(btn.charName) else FillRecipient(btn.charName) end
+            end)
+            b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+            b.tip = L["Left click: fill in as recipient. Right click: remove."]
+            f.contactButtons[i] = b
+        end
+        b.charName = name
+        b:SetLabel(name)
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", 8, y)
+        b:Show()
+        y = y - 22
+    end
+    for i = #contacts + 1, #f.contactButtons do f.contactButtons[i]:Hide() end
+    f.contactEmpty:SetShown(showContacts and #contacts == 0)
+    if showContacts then
+        if #contacts == 0 then
+            f.contactEmpty:ClearAllPoints()
+            f.contactEmpty:SetPoint("TOPLEFT", x, y)
+            y = y - 30
+        end
+        f.input:ClearAllPoints()
+        f.input:SetPoint("TOPLEFT", 8, y - 2)
+        f.add:ClearAllPoints()
+        f.add:SetPoint("LEFT", f.input, "RIGHT", 4, 0)
+        y = y - 28
+    end
+    f:SetHeight(-y + 8 + (Style.blizzard and 10 or 0))
     f:Show()
 end
 

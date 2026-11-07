@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.18.0
+- Mail: saved contacts under your characters on the send page. Type a name (or leave it empty to take the one in the "To:" field) and press "+"; a click fills in the recipient, a right click removes the contact. Shared by all your characters.
+
 ## 2.17.0
 - Bag, bank and guild bank windows: new header symbols (sort, options, bank, keyring, character) as plain pale-gold line icons that glow under the mouse and while active.
 
