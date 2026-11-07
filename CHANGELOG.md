@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.14.1
+- Releases now carry a release.json that marks them for WoW Forever (for WowUp Hub).
+
 ## 2.14.0
 - First public release on GitHub / WowUp Hub.
 - Reagent bag (WoW Forever): shown as its own block under the bags, with its free slots in the footer; sorted on its own.
