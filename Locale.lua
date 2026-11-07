@@ -140,7 +140,7 @@ if GetLocale() == "deDE" then
     L["Selling junk, repairing and restocking."] = "Schrott verkaufen, automatisch reparieren und nachkaufen."
     L["Accepting and handing in quests on their own, skipping gossip."] = "Quests automatisch annehmen und abgeben, Gespräche überspringen."
     L["Reminders for missing buffs and a watch on your consumables."] = "Erinnerung an fehlende Buffs und ein Blick auf deine Verbrauchsgüter."
-    L["Info bar, tooltips, minimap button and experience."] = "Info-Leiste, Tooltips, Minikarten-Knopf und Erfahrung."
+    L["Info bar, tooltips, addon buttons and experience."] = "Info-Leiste, Tooltips, Addon-Knöpfe und Erfahrung."
     L["Mail helpers, error filter, looting and small automations."] = "Post-Helfer, Fehlerfilter, Plündern und kleine Automatiken."
     L["Improvements for the chat window."] = "Verbesserungen für das Chatfenster."
     L["Blizzard windows"]     = "Blizzard-Fenster"

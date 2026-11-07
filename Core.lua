@@ -330,7 +330,7 @@ AIO.categories = {
     { key = "buffs",    section = "helpers", label = L["Buffs & Consumables"], icon = "Interface\\Icons\\Spell_Holy_WordFortitude",
       blurb = L["Reminders for missing buffs and a watch on your consumables."] },
     { key = "display",  section = "helpers", label = L["Display"], icon = "Interface\\Icons\\INV_Misc_Spyglass_02",
-      blurb = L["Info bar, tooltips, minimap button and experience."] },
+      blurb = L["Info bar, tooltips, addon buttons and experience."] },
     { key = "windows",  section = "helpers", label = L["Blizzard windows"], icon = "Interface\\Icons\\INV_Scroll_03",
       blurb = L["Larger quest log, profession and trainer windows."] },
     { key = "comfort",  section = "helpers", label = L["Comfort"], icon = "Interface\\Icons\\INV_Misc_Gear_01",

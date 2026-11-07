@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.18.2
+- Options: the separate "Minimap button" page is gone. The AllInOne button is always there and is collected with the other addons' buttons under "Addon buttons".
+
 ## 2.18.1
 - Header symbols of the bag windows now sit on small dark slate buttons with a bevelled edge, like Blizzard's own sort button; the edge turns gold under the mouse and while active.
 

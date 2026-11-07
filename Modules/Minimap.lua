@@ -1,6 +1,9 @@
 -- AllInOne: a round button on the edge of the minimap, in the classic golden
 -- ring like the other minimap buttons. Left click opens
 -- the options, right click the bags; drag it around the minimap.
+--
+-- Always on and without a page of its own in the options: it is the way into
+-- the options, and "Addon buttons" collects it with the other addons' buttons.
 
 local ADDON, ns = ...
 if ns.env then setfenv(1, ns.env) end
@@ -27,7 +30,8 @@ local M = AIO:NewModule("minimap", {
     title    = L["Minimap button"],
     short    = L["A round button on the minimap for the options and the bags."],
     desc     = L["A round button on the edge of the minimap. Left click opens the options, right click the bags. Drag it to move it around the minimap."],
-    category = "display",
+    category = nil,      -- not listed in the options (see above)
+    alwaysOn = true,
     default  = true,
     defaults = { angle = DEFAULT_ANGLE, lock = false },
     options  = {
