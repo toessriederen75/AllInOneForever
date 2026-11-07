@@ -68,6 +68,7 @@ if GetLocale() == "deDE" then
     L["Quality borders"]      = "Qualitätsrahmen"
     L["Show keyring in bags"] = "Schlüsselbund in den Taschen zeigen"
     L["Show or hide the keyring"] = "Schlüsselbund ein- oder ausblenden"
+    L["Open the bank (as last seen when you are not at a banker)"] = "Bank öffnen (wie zuletzt gesehen, wenn du nicht beim Bankier bist)"
     L["Show empty slots"]     = "Leere Plätze zeigen"
     L["Space between slots"]  = "Abstand zwischen den Plätzen"
     L["Arrangement & sorting"] = "Anordnung & Sortieren"

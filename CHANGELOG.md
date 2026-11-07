@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.16.0
+- Bags: a bank button in the header opens the bank of the same character (live at a banker, otherwise as last seen); it stays lit while the bank is open.
+
 ## 2.15.0
 - Missing buffs: gathering tracking. Find Minerals, Find Herbs and Find Fish show up while the search of a profession you have is switched off (Find Treasure for dwarves can be switched on). Click to switch it on.
 

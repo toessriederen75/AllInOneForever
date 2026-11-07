@@ -116,17 +116,36 @@ end
 -- Bags
 -- ---------------------------------------------------------------------------
 
+-- Bank button in the header of the bags: opens the bank window of the same
+-- character (live at a banker, otherwise as last seen), a second click closes it.
+local bankButton = {
+    icon = "Interface\\Icons\\INV_Box_02", tip = L["Open the bank (as last seen when you are not at a banker)"],
+    active = function() local b = AIO.windows.bank; return b ~= nil and b:IsShown() end,
+    click = function(w)
+        local b = AIO.windows.bank
+        if not b then return end
+        if b:IsShown() then
+            b:Hide()
+        else
+            b.owner = w.owner
+            AIO:Show("bank")
+        end
+    end,
+}
+
+-- Key button in the header: shows or hides the keyring under the bags.
+local keyButton = AIO.KEYRING and {
+    icon = "Interface\\Icons\\INV_Misc_Key_03", tip = L["Show or hide the keyring"],
+    active = function() return AIO.settings.showKeyring end,
+    click = function(w)
+        AIO.settings.showKeyring = not AIO.settings.showKeyring
+        AIO:RefreshAll()
+        if AIO.RefreshOptionsPage then AIO:RefreshOptionsPage() end
+    end,
+} or nil
+
 local inventory = {
-    -- Key button in the header: shows or hides the keyring under the bags.
-    headerButtons = AIO.KEYRING and {
-        { icon = "Interface\\Icons\\INV_Misc_Key_03", tip = L["Show or hide the keyring"],
-          active = function() return AIO.settings.showKeyring end,
-          click = function(w)
-              AIO.settings.showKeyring = not AIO.settings.showKeyring
-              AIO:RefreshAll()
-              if AIO.RefreshOptionsPage then AIO:RefreshOptionsPage() end
-          end },
-    } or nil,
+    headerButtons = { bankButton, keyButton },
     Owners = CharacterMenu,
     IsLive = function(w) return IsMe(w) end,
     CanSort = function(w) return IsMe(w) end,
@@ -403,4 +422,16 @@ function AIO:CreateWindows()
     self:CreateWindow("inventory", inventory)
     self:CreateWindow("bank", bank)
     self:CreateWindow("guild", guild)
+    -- The bank button in the bags is lit exactly while the bank window is
+    -- open, however it is opened or closed.
+    local inv, b = self.windows.inventory, self.windows.bank
+    if inv and b then
+        local function lit()
+            for _, hb in ipairs(inv.headerButtons or {}) do
+                if hb.def.active then hb:SetActive(hb.def.active(inv)) end
+            end
+        end
+        b:HookScript("OnShow", lit)
+        b:HookScript("OnHide", lit)
+    end
 end
