@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.20.2
+- Travel routes: Feathermoon ferry, and the WoW Forever routes from Skywatcher Plateau and Dalaran to Valanaar. /aio map here prints your map and position.
+
 ## 2.20.1
 - Travel routes: zones are found by name when the client numbers its maps differently; new command /aio map shows what the map module sees.
 

@@ -37,6 +37,11 @@ if GetLocale() == "deDE" then
     L["Orgrimmar"]             = "Orgrimmar"
     L["Undercity"]             = "Unterstadt"
     L["Grom'gol Base Camp"]    = "Grom'gol-Basislager"
+    L["Feathermoon Stronghold"] = "Mondfederfeste"
+    L["The Forgotten Coast"]   = "Die Vergessene Küste"
+    L["Skywatcher Plateau"]    = "Himmelswacht-Plateau"
+    L["Dalaran"]               = "Dalaran"
+    L["Valanaar (Zephras Isle)"] = "Valanaar (Zephras-Insel)"
 end
 
 local M = AIO:NewModule("travel", {
@@ -70,6 +75,9 @@ local ZONE = {
     barrens       = { 1413, "the barrens", "brachland", "das brachland" },
     durotar       = { 1411, "durotar" },
     tirisfal      = { 1420, "tirisfal glades", "tirisfal", "tirisfallichtung" },
+    feralas       = { 1444, "feralas" },
+    mulgore       = { 1412, "mulgore" },
+    alterac       = { 1416, "alterac mountains", "alteracgebirge" },
 }
 local WETLANDS, DARKSHORE, DUSTWALLOW, TELDRASSIL = "wetlands", "darkshore", "dustwallow", "teldrassil"
 local STRANGLETHORN, BARRENS, DUROTAR, TIRISFAL = "stranglethorn", "barrens", "durotar", "tirisfal"
@@ -131,6 +139,13 @@ local ROUTES = {
       { DUROTAR, 0.5060, 0.1260, L["Orgrimmar"] }, { STRANGLETHORN, 0.3150, 0.2970, L["Grom'gol Base Camp"] } },
     { kind = "zeppelin", faction = "Horde",
       { TIRISFAL, 0.6190, 0.5900, L["Undercity"] }, { STRANGLETHORN, 0.3160, 0.3020, L["Grom'gol Base Camp"] } },
+    { kind = "boat", faction = "Alliance",
+      { "feralas", 0.3110, 0.3970, L["Feathermoon Stronghold"] }, { "feralas", 0.4330, 0.4280, L["The Forgotten Coast"] } },
+    -- WoW Forever: to Valanaar on Zephras Isle, which has no place on the map.
+    { kind = "zeppelin", faction = "Horde",
+      { "mulgore", 0.3430, 0.2580, L["Skywatcher Plateau"] }, { nil, 0, 0, L["Valanaar (Zephras Isle)"] } },
+    { kind = "zeppelin", faction = "Neutral",
+      { "alterac", 0.1250, 0.5180, L["Dalaran"] }, { nil, 0, 0, L["Valanaar (Zephras Isle)"] } },
 }
 
 local ICON = {
@@ -334,8 +349,20 @@ function M:OnSettingChanged()
 end
 
 --- /aio map: what the module sees (for finding problems without scripts).
+--- /aio map here: your own map and position, to note where a dock lies.
 M.slash = "map"
-function M:Slash()
+function M:Slash(rest)
+    if rest and rest:lower():match("^here") then
+        local id = C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+        local pos = id and C_Map.GetPlayerMapPosition(id, "player")
+        if pos then
+            local x, y = pos:GetXY()
+            AIO:Print(("Here: map %d (%s)  %.4f, %.4f"):format(id, tostring(NameOf(id)), x, y))
+        else
+            AIO:Print("Here: no position.")
+        end
+        return
+    end
     local wm = _G.WorldMapFrame
     local id = wm and wm.GetMapID and wm:GetMapID()
     AIO:Print(("Map open: %s  map ID: %s (%s)  pins: %d  lines: %d"):format(
