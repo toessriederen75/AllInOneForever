@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.20.0
+- New "Map" tab: travel routes. Every boat dock and zeppelin tower gets a pin on the world map; pointing at it tells where it goes. On continent and world maps a coloured line joins both ends (blue Alliance, red Horde, gold neutral). Only your own faction by default.
+
 ## 2.19.0
 - Options: one search box at the top right that searches everything – every tab, every helper and the names and descriptions of all their settings. Hits are listed under their tab; Esc clears the search.
 

@@ -12,7 +12,8 @@ One addon instead of a dozen, written to use as little memory and CPU as possibl
 - **Bags, bank, guild bank** – one window each in Blizzard's modern look, with search, sorting, item level, quality borders, reagent bag and your other characters' items (offline view).
 - **Merchants & NPCs** – sell junk, repair, keep reagents and ammunition stocked, accept and turn in quests, skip gossip.
 - **Buffs** – a row of your missing own buffs (click to cast, hold Alt to move), consumables tracker.
-- **Interface** – info bar (gold, durability, bag space, clock …), tooltips with IDs and item level, chat improvements, minimap button collector, numbers on the XP bar.
+- **Interface** – info bar (gold, durability, bag space, clock …), tooltips with IDs and item level, chat improvements, minimap button collector.
+- **Map** – boat and zeppelin routes on the world map.
 - **Spell ranks** – finds spells on your bars that are not at their highest rank and replaces them with one click.
 - **Danger alarm** – a sound for fatigue, drowning and being attacked while away.
 - **Comfort** – mail helpers, error filter, fast loot and other small automations.
