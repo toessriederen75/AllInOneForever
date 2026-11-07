@@ -1,49 +1,62 @@
-# Builds the addon zip and attaches it to a GitHub release as soon as the
-# release is published (tag v2.14.0, v2.14.1, ...). WowUp Hub picks the
+# Publishes a GitHub release with the addon zip whenever a new version shows
+# up at the top of CHANGELOG.md on main ("## 2.14.1"). WowUp Hub picks the
 # release up by itself.
 #
-# New version: add it to CHANGELOG.md, then on GitHub "Releases" -> "Draft a
-# new release" -> tag "v<version>" -> Publish. Everything else happens here.
+# New version: add a "## <version>" section at the top of CHANGELOG.md and
+# push it to main. Everything else happens here. A version that already has
+# a release is left alone, so ordinary pushes do nothing.
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
       ADDON: AllInOneForever
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
+
+      - name: Version from CHANGELOG.md
+        id: version
+        run: |
+          VERSION="$(awk '/^## [0-9]/ {print $2; exit}' CHANGELOG.md)"
+          if [ -z "$VERSION" ]; then echo "No version in CHANGELOG.md"; exit 1; fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION exists already, nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build zip
+        if: steps.version.outputs.skip != 'true'
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          VERSION="${TAG#v}"
           mkdir -p "build/$ADDON"
           git archive --format=tar HEAD | tar -x -C "build/$ADDON"
           sed -i "s/^## Version:.*/## Version: $VERSION/" "build/$ADDON/$ADDON.toc"
           # WoW Forever's own toc name, so updaters see the game version at once.
           cp "build/$ADDON/$ADDON.toc" "build/$ADDON/${ADDON}_Forever.toc"
           (cd build && zip -qr "$ADDON-$VERSION.zip" "$ADDON")
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Release notes from CHANGELOG.md
+        if: steps.version.outputs.skip != 'true'
         run: |
           awk -v v="$VERSION" '$0 ~ "^## " {p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
           [ -s notes.md ] || echo "Version $VERSION" > notes.md
 
-      - name: Attach zip and notes to the release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Publish release
+        if: steps.version.outputs.skip != 'true'
         run: |
-          gh release upload "$TAG" "build/$ADDON-$VERSION.zip" --clobber
-          gh release edit "$TAG" --title "$ADDON $VERSION" --notes-file notes.md
+          gh release create "v$VERSION" "build/$ADDON-$VERSION.zip" \
+            --target "$GITHUB_SHA" --title "$ADDON $VERSION" --notes-file notes.md
