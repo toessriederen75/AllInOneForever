@@ -58,8 +58,63 @@ local M = AIO:NewModule("travel", {
 -- Zone maps by their map ID; positions as fractions of the zone map.
 -- ---------------------------------------------------------------------------
 
-local WETLANDS, DARKSHORE, DUSTWALLOW, TELDRASSIL = 1437, 1439, 1445, 1438
-local STRANGLETHORN, BARRENS, DUROTAR, TIRISFAL = 1434, 1413, 1411, 1420
+-- Zones by name (English and German) with the map ID of the classic world as
+-- a first guess. The real IDs are looked up on first use, so a client that
+-- numbers its maps differently still finds them.
+local ZONE = {
+    wetlands      = { 1437, "wetlands", "sumpfland" },
+    darkshore     = { 1439, "darkshore", "dunkelküste" },
+    dustwallow    = { 1445, "dustwallow marsh", "düstermarschen" },
+    teldrassil    = { 1438, "teldrassil" },
+    stranglethorn = { 1434, "stranglethorn vale", "schlingendorntal" },
+    barrens       = { 1413, "the barrens", "brachland", "das brachland" },
+    durotar       = { 1411, "durotar" },
+    tirisfal      = { 1420, "tirisfal glades", "tirisfal", "tirisfallichtung" },
+}
+local WETLANDS, DARKSHORE, DUSTWALLOW, TELDRASSIL = "wetlands", "darkshore", "dustwallow", "teldrassil"
+local STRANGLETHORN, BARRENS, DUROTAR, TIRISFAL = "stranglethorn", "barrens", "durotar", "tirisfal"
+
+local resolved   -- zone key -> map ID, filled by Resolve()
+
+local function NameOf(id)
+    local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(id)
+    return info and info.name and info.name:lower()
+end
+
+local function Matches(name, z)
+    if not name then return false end
+    for i = 2, #z do if name == z[i] then return true end end
+    return false
+end
+
+--- Finds the map ID of every zone: the first guess if its name fits,
+--- otherwise any zone map of the world with that name.
+local function Resolve()
+    if resolved then return resolved end
+    resolved = {}
+    local all
+    for key, z in pairs(ZONE) do
+        if Matches(NameOf(z[1]), z) then
+            resolved[key] = z[1]
+        else
+            if not all then
+                all = {}
+                local world = C_Map.GetFallbackWorldMapID and C_Map.GetFallbackWorldMapID() or 947
+                local zoneType = Enum and Enum.UIMapType and Enum.UIMapType.Zone or 3
+                local ok, list = pcall(C_Map.GetMapChildrenInfo, world, zoneType, true)
+                if ok and list then all = list end
+            end
+            for _, info in ipairs(all) do
+                if Matches(info.name and info.name:lower(), z) then resolved[key] = info.mapID break end
+            end
+        end
+    end
+    return resolved
+end
+
+local function ZoneID(e)
+    return Resolve()[e[1]]
+end
 
 local ROUTES = {
     { kind = "boat", faction = "Alliance",
@@ -99,8 +154,9 @@ local function WorldPos(e)
     local w = world[e]
     if w ~= nil then return w or nil end
     world[e] = false
-    if not (C_Map and C_Map.GetWorldPosFromMapPos and C_Map.GetMapInfo(e[1])) then return nil end
-    local ok, continent, pos = pcall(C_Map.GetWorldPosFromMapPos, e[1], CreateVector2D(e[2], e[3]))
+    local id = ZoneID(e)
+    if not (id and C_Map and C_Map.GetWorldPosFromMapPos) then return nil end
+    local ok, continent, pos = pcall(C_Map.GetWorldPosFromMapPos, id, CreateVector2D(e[2], e[3]))
     if ok and continent and pos then
         world[e] = { continent, pos }
         return world[e]
@@ -110,7 +166,7 @@ end
 
 --- Where a route end lies on map `mapID` (0..1 each), or nil when it is not on it.
 local function MapPos(e, mapID)
-    if e[1] == mapID then return e[2], e[3] end
+    if ZoneID(e) == mapID then return e[2], e[3] end
     local w = WorldPos(e)
     if not w then return nil end
     local ok, _, pos = pcall(C_Map.GetMapPosFromWorldPos, w[1], w[2], mapID)
@@ -229,7 +285,7 @@ function M:Refresh()
                         p.trips[#p.trips + 1] = { kind = r.kind, faction = r.faction, to = other[4] }
                     end
                 end
-                if self.db.lines and ax and bx and r[1][1] ~= mapID and r[2][1] ~= mapID then
+                if self.db.lines and ax and bx and ZoneID(r[1]) ~= mapID and ZoneID(r[2]) ~= mapID then
                     nl = nl + 1
                     local l = Line(nl)
                     local c = LINE_COLOR[r.faction]
@@ -241,6 +297,7 @@ function M:Refresh()
             end
         end
     end
+    self.placed, self.drawn, self.shownMap = np, nl, mapID
     for i = np + 1, #pins do pins[i]:Hide() end
     for i = nl + 1, #lines do lines[i]:Hide() end
     Rescale()
@@ -274,6 +331,23 @@ end
 
 function M:OnSettingChanged()
     self:Refresh()
+end
+
+--- /aio map: what the module sees (for finding problems without scripts).
+M.slash = "map"
+function M:Slash()
+    local wm = _G.WorldMapFrame
+    local id = wm and wm.GetMapID and wm:GetMapID()
+    AIO:Print(("Map open: %s  map ID: %s (%s)  pins: %d  lines: %d"):format(
+        tostring(wm and wm:IsShown()), tostring(id), tostring(id and NameOf(id)),
+        self.placed or 0, self.drawn or 0))
+    local parts = {}
+    for key in pairs(ZONE) do parts[#parts + 1] = key .. "=" .. tostring(Resolve()[key]) end
+    table.sort(parts)
+    AIO:Print("Zones: " .. table.concat(parts, ", "))
+    local e = ROUTES[1][1]
+    local w = WorldPos(e)
+    AIO:Print(("Menethil world position: %s"):format(w and ("%s / %.0f, %.0f"):format(tostring(w[1]), w[2]:GetXY()) or "none"))
 end
 
 -- The world map is load-on-demand on some clients.

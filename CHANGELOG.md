@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.20.1
+- Travel routes: zones are found by name when the client numbers its maps differently; new command /aio map shows what the map module sees.
+
 ## 2.20.0
 - New "Map" tab: travel routes. Every boat dock and zeppelin tower gets a pin on the world map; pointing at it tells where it goes. On continent and world maps a coloured line joins both ends (blue Alliance, red Horde, gold neutral). Only your own faction by default.
 
