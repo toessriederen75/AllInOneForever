@@ -1,12 +1,15 @@
--- AllInOne: a glow on items you have just looted. The first time you open
--- your bags afterwards, new quest items and new armour (not junk) shine, as
--- in Blizzard's own bags. Pointing at an item or closing the bags takes the
--- glow away. Can be switched off (Bags & Bank > General > Items).
+-- AllInOne: a glow on items you have just got (looted, bought, traded,
+-- from the mail). The first time you open your bags afterwards, every new
+-- item except junk shines, as in Blizzard's own bags. Pointing at an item or
+-- closing the bags takes the glow away. Can be switched off (Bags & Bank >
+-- General > Items).
 --
--- How: what lies in every slot of your bags (item and count) is noted at
--- login and each time the bag window closes. A slot whose item differs from
--- that note, or whose stack grew, holds something new. Nothing runs while the
--- bags are closed; the check happens while a slot is painted anyway.
+-- How: clients that keep track of new items themselves (WoW Forever, like
+-- Retail: C_NewItems) are asked directly. Elsewhere, what lies in every slot
+-- of your bags (item and count) is noted at login and each time the bag
+-- window closes; a slot whose item differs from that note, or whose stack
+-- grew, holds something new. Nothing runs while the bags are closed; the
+-- check happens while a slot is painted anyway.
 
 local ADDON, ns = ...
 if ns.env then setfenv(1, ns.env) end
@@ -14,13 +17,15 @@ local AIO, L = ns.AIO, ns.L
 
 if GetLocale() == "deDE" then
     L["Glow on new items"] = "Leuchten bei neuen Gegenständen"
-    L["Quest items and armour you have just looted shine the first time you open your bags. Not junk."] =
-        "Questgegenstände und Rüstungen, die du gerade erbeutet hast, leuchten beim ersten Öffnen der Taschen. Kein Schrott."
+    L["Items you have just got shine the first time you open your bags. Not junk."] =
+        "Gegenstände, die du gerade bekommen hast, leuchten beim ersten Öffnen der Taschen. Kein Schrott."
 end
 
 AIO.defaults.newGlow = true
 
-local CLASS_ARMOR, CLASS_QUEST = 4, 12
+local CLASS_QUEST = 12
+-- The game's own list of new items, where there is one.
+local CNI = C_NewItems and C_NewItems.IsNewItem and C_NewItems
 
 -- What each slot held when you last looked: seen[bag][slot] = itemID,
 -- seenCount[bag][slot] = stack size. A bag without a note yet gets one the
@@ -47,6 +52,10 @@ local function NoteAll()
 end
 
 local function IsNew(bag, slot, info)
+    if CNI then
+        local ok, new = pcall(CNI.IsNewItem, bag, slot)
+        return ok and new and true or false
+    end
     local ids = seen[bag]
     if not ids then return false end
     local id = info.itemID or AIO.ItemID(info.hyperlink) or 0
@@ -55,10 +64,7 @@ local function IsNew(bag, slot, info)
 end
 
 local function Wanted(info)
-    local quality = info.quality
-    if quality == 0 then return false end                 -- junk
-    local class = AIO:ItemClassLevel(info.hyperlink)
-    return class == CLASS_QUEST or (class == CLASS_ARMOR and (quality or 1) >= 1)
+    return info.quality ~= 0                              -- not junk
 end
 
 -- ---------------------------------------------------------------------------
@@ -75,6 +81,7 @@ end
 local function Seen(b)
     local g = b.aioNew
     if not (g and g:IsShown()) then return end
+    if CNI and CNI.RemoveNewItem then pcall(CNI.RemoveNewItem, b.bag, b.slot) end
     local info = AIO.SlotInfo(b.bag, b.slot)
     local ids = seen[b.bag]
     if ids and info then
@@ -118,9 +125,27 @@ local function Hide(b)
     if g and g:IsShown() then g.pulse:Stop(); g:Hide() end
 end
 
+-- Closing the bags: everything in them has been seen. Hooked the first time
+-- a slot of the bag window is painted (the window is made after this file).
+local hooked = false
+local function HookWindow()
+    local w = AIO.windows and AIO.windows.inventory
+    if hooked or not w then return end
+    hooked = true
+    w:HookScript("OnHide", function(self)
+        if self.owner and self.owner ~= AIO.player then return end
+        if CNI and CNI.ClearAll then pcall(CNI.ClearAll) end
+        NoteAll()
+        for _, slots in pairs(self.live or {}) do
+            for _, b in pairs(slots) do Hide(b) end
+        end
+    end)
+end
+
 -- Every live slot is painted here; the glow is decided on the way.
 local PaintLive = AIO.PaintLive
 function AIO:PaintLive(b)
+    if not hooked then HookWindow() end
     local info = PaintLive(self, b)
     if not self:IsInventoryBag(b.bag) or b.bag == self.KEYRING or not self.settings.newGlow then
         Hide(b)
@@ -151,16 +176,6 @@ end
 -- ---------------------------------------------------------------------------
 
 AIO:On("PLAYER_LOGIN", function()
-    NoteAll()
-    local w = AIO.windows and AIO.windows.inventory
-    if w then
-        -- Closing the bags: everything in them has been seen.
-        w:HookScript("OnHide", function(self)
-            if self.owner and self.owner ~= AIO.player then return end
-            NoteAll()
-            for _, slots in pairs(self.live or {}) do
-                for _, b in pairs(slots) do Hide(b) end
-            end
-        end)
-    end
+    if not CNI then NoteAll() end
+    HookWindow()
 end)

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.18.3
+- Glow on new items: works again in WoW Forever. Uses the game's own list of new items, so everything you just got (looted, bought, traded, mailed) shines, except junk; pointing at it or closing the bags takes the glow away.
+
 ## 2.18.2
 - Options: the separate "Minimap button" page is gone. The AllInOne button is always there and is collected with the other addons' buttons under "Addon buttons".
 

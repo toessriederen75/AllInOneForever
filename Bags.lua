@@ -40,7 +40,7 @@ local general = {
     Toggle("qualityBorder", L["Quality borders"], L["Colours the border of an item by its quality; quest items in gold."]),
     Toggle("itemLevel",     L["Item level on gear"]),
     Toggle("junkIcon",      L["Coin on junk"]),
-    Toggle("newGlow",       L["Glow on new items"], L["Quest items and armour you have just looted shine the first time you open your bags. Not junk."]),
+    Toggle("newGlow",       L["Glow on new items"], L["Items you have just got shine the first time you open your bags. Not junk."]),
     Toggle("emptySlots",    L["Show empty slots"]),
     { type = "slider", label = L["Space between slots"], min = 0, max = 10, step = 1, half = true,
       get = function() return AIO.settings.slotGap end,
