@@ -53,6 +53,8 @@ if GetLocale() == "deDE" then
     L["Buy bank slot"]        = "Bankfach kaufen"
     L["Buy a bank bag slot for %s?"] = "Ein Bankfach für %s kaufen?"
     L["Bank bag slot (not bought yet)"] = "Bankfach (noch nicht gekauft)"
+    L["Buy bank tab"] = "Bank-Tab kaufen"
+    L["Opens Blizzard's bank window next to this one; buy the tab there. It goes away again by itself."] = "Öffnet daneben Blizzards Bankfenster; dort den Tab kaufen. Es verschwindet danach von selbst."
     L["Bank bag slot: drop a bag here"] = "Bankfach: hier eine Tasche hineinlegen"
     L["No data for this guild yet. Open the guild bank once."] =
         "Noch keine Daten für diese Gilde. Öffne die Gildenbank einmal."

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.22.1
+- Bank (WoW Forever): bank tabs are recognised (all nine). "Buy bank tab" brings Blizzard's own bank window up next to ours, because only Blizzard's button may buy a tab; it goes away again by itself once the tab is bought. No more blocked-action message.
+
 ## 2.22.0
 - Bank: a row of the bank bag slots at the bottom of the bank window – drop a bag in, click to take it out; slots not bought yet are red. Next to it the button to buy the next slot (works with bank bag slots and with bank tabs). /aio info also lists which bank functions the client has.
 

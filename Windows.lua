@@ -313,11 +313,18 @@ local bank = {
             b:Hide()
             w.bagSlots[i] = b
         end
-        w.buy = AIO.Style.Button(w, L["Buy bank slot"], 130, 22)
+        w.buy = AIO.Style.Button(w, AIO.BANK_TABS and L["Buy bank tab"] or L["Buy bank slot"], 130, 22)
         w.buy:SetScript("OnClick", function()
+            if AIO.BANK_TABS then
+                -- Only Blizzard's own button may buy a tab: show its window.
+                local f = _G.BankFrame
+                AIO:BlizzardBank(not (f and f.aioOnScreen))
+                return
+            end
             local _, _, cost = BankSlots()
             StaticPopup_Show("ALLINONE_BUY_BANKSLOT", L["Buy a bank bag slot for %s?"]:format(AIO.Money(cost)))
         end)
+        w.buy.tip = AIO.BANK_TABS and L["Opens Blizzard's bank window next to this one; buy the tab there. It goes away again by itself."] or nil
         w.buy:Hide()
     end,
     Update = function(w)
@@ -325,7 +332,7 @@ local bank = {
         local num, full = BankSlots()
         local anySlot = false
         for i, b in ipairs(w.bagSlots) do
-            local inv = live and BankBagInv(b.bag)
+            local inv = live and not AIO.BANK_TABS and BankBagInv(b.bag)
             if inv then
                 anySlot = true
                 b.locked = i > num

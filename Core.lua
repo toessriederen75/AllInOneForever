@@ -30,6 +30,13 @@ AIO.REAGENTBAG     = BI and BI.ReagentBag or nil
 AIO.FIRST_BANKBAG  = (BI and BI.BankBag_1)
     or ((_G.NUM_TOTAL_EQUIPPED_BAG_SLOTS or (AIO.NUM_BAGS + (AIO.REAGENTBAG and 1 or 0))) + 1)
 AIO.REAGENT_FAMILY = -1   -- our own "family" for it: never mixed with other items
+-- WoW Forever: bank tabs (CharacterBankTab_1..n) instead of bank bag slots.
+AIO.BANK_TABS = BI and BI.CharacterBankTab_1 ~= nil or false
+if AIO.BANK_TABS then
+    local n = 0
+    while BI["CharacterBankTab_" .. (n + 1)] do n = n + 1 end
+    AIO.NUM_BANKBAGS = n
+end
 AIO.GUILD_SLOTS  = _G.MAX_GUILDBANK_SLOTS_PER_TAB or 98
 AIO.SIZE         = 37   -- item button size
 AIO.GAP          = 4    -- space between buttons (the setting slotGap wins)
@@ -552,6 +559,7 @@ end
 local ghosts = {}
 
 local function Banish(frame)
+    if frame.aioOnScreen then return end
     frame:SetAlpha(0)
     frame:EnableMouse(false)
     frame:ClearAllPoints()
@@ -592,12 +600,35 @@ end
 
 function AIO:BankClosed()
     if not self.atBank then return end
+    self:BlizzardBank(false)
     self:ScanBank()
     self.atBank = false
     self.closingBank = true
     self:Hide("bank")
     self:Hide("inventory", "bank")
     self.closingBank = nil
+end
+
+--- Brings Blizzard's own bank window back for a moment, next to ours: buying
+--- a bank tab is reserved for Blizzard's buttons. Put away again when a tab
+--- was bought, when the bank closes, or with `hide`.
+function AIO:BlizzardBank(show)
+    local f = _G.BankFrame
+    if not f then return end
+    f.aioOnScreen = show and true or nil
+    if show then
+        f:SetAlpha(1)
+        f:EnableMouse(true)
+        f:ClearAllPoints()
+        local w = self.windows.bank
+        if w and w:IsShown() then
+            f:SetPoint("TOPLEFT", w, "TOPRIGHT", 8, 0)
+        else
+            f:SetPoint("CENTER", UIParent, "CENTER")
+        end
+    else
+        Banish(f)
+    end
 end
 
 function AIO:CloseBank()
@@ -766,7 +797,11 @@ AIO:On("PLAYERBANKBAGSLOTS_CHANGED", function()
 end)
 -- Newer clients: bank tabs instead of bank bag slots.
 if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("BANK_TABS_CHANGED") then
-    AIO:On("BANK_TABS_CHANGED", function() AIO:RefreshAll() end)
+    AIO:On("BANK_TABS_CHANGED", function()
+        AIO:BlizzardBank(false)
+        if AIO.atBank then AIO:ScanBank() end
+        AIO:RefreshAll()
+    end)
 end
 AIO:On("ITEM_LOCK_CHANGED", function() AIO:RepaintAll() end)
 AIO:On("BAG_UPDATE_COOLDOWN", function() AIO:RepaintAll() end)
