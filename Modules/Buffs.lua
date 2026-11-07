@@ -30,6 +30,13 @@ if GetLocale() == "deDE" then
     L["Down"] = "Unten"
     L["Reset position"] = "Position zurücksetzen"
     L["Buffs of your class"] = "Buffs deiner Klasse"
+    L["Gathering tracking"] = "Sammel-Suche"
+    L["Shows the search of your gathering professions when it is not switched on. Professions you do not have are skipped."] = "Zeigt die Suche deiner Sammelberufe an, wenn sie nicht eingeschaltet ist. Berufe, die du nicht hast, werden übersprungen."
+    L["Find Minerals"] = "Mineraliensuche"
+    L["Find Herbs"] = "Kräutersuche"
+    L["Find Fish"] = "Fischsuche"
+    L["Find Treasure"] = "Schatzsuche"
+    L["Tracking is off. Click to switch it on."] = "Die Suche ist aus. Klicken zum Einschalten."
     L["Spells you have not learned are skipped."] = "Nicht erlernte Zauber werden übersprungen."
     L["Cast: %s"] = "Zaubern: %s"
     L["Best known"] = "Bester bekannter"
@@ -118,6 +125,20 @@ local CLASSES = {
     },
 }
 
+-- ---------------------------------------------------------------------------
+-- Gathering tracking, for every class: shown while the search of a
+-- profession you have is not switched on on the minimap.
+--
+--   track   the tracking spell; known only with the profession (or race)
+-- ---------------------------------------------------------------------------
+
+local TRACKING = {
+    { key = "minerals", label = L["Find Minerals"], track = 2580 },
+    { key = "herbs",    label = L["Find Herbs"],    track = 2383 },
+    { key = "fish",     label = L["Find Fish"],     track = 43308 },
+    { key = "treasure", label = L["Find Treasure"], track = 2481, off = true },   -- dwarves
+}
+
 local defaults = {
     locked = true, combat = true, threshold = 3, scale = 1, size = 32, grow = "RIGHT",
     point = { "TOP", "UIParent", "TOP", -120, -140 },
@@ -128,6 +149,11 @@ for class, list in pairs(CLASSES) do
         defaults["on_" .. e.id] = not e.off
         if e.cast and #e.cast > 1 then defaults["cast_" .. e.id] = 0 end
     end
+end
+for _, e in ipairs(TRACKING) do
+    e.id = "TRACK_" .. e.key
+    e.cast = { e.track }
+    defaults["on_" .. e.id] = not e.off
 end
 
 -- ---------------------------------------------------------------------------
@@ -178,6 +204,49 @@ local function CastSpell(M, e)
     for _, id in ipairs(e.cast) do
         if Known(id) then return id end
     end
+end
+
+-- ---------------------------------------------------------------------------
+-- Minimap tracking
+-- ---------------------------------------------------------------------------
+
+--- Which tracking spells are switched on: { [spellID or name] = true }, and
+--- whether the client keeps several searches on at once.
+local function ActiveTracking()
+    local on, multi = {}, false
+    local MM = C_Minimap
+    if MM and MM.GetNumTrackingTypes and MM.GetTrackingInfo then
+        multi = true
+        for i = 1, MM.GetNumTrackingTypes() or 0 do
+            local a, _, c, _, _, f = MM.GetTrackingInfo(i)
+            local name, active, id
+            if type(a) == "table" then
+                name, active, id = a.name, a.active, a.spellID
+            else
+                name, active, id = a, c, f
+            end
+            if active then
+                if id then on[id] = true end
+                if name then on[name] = true end
+            end
+        end
+    elseif _G.GetTrackingTexture then
+        local tex = GetTrackingTexture()
+        if tex then on.texture = tex end
+    end
+    return on, multi
+end
+
+local function Tracking(on, e)
+    if on[e.track] then return true end
+    local name = SpellName(e.track)
+    if name and on[name] then return true end
+    if on.texture then
+        local icon = SpellIcon(e.track)
+        return icon == on.texture or (type(on.texture) == "string" and type(icon) == "string"
+            and on.texture:lower() == icon:lower())
+    end
+    return false
 end
 
 -- ---------------------------------------------------------------------------
@@ -302,6 +371,12 @@ local function AddClassOptions()
 end
 AddClassOptions()
 
+options[#options + 1] = { type = "header", label = L["Gathering tracking"] }
+options[#options + 1] = { type = "text", label = L["Shows the search of your gathering professions when it is not switched on. Professions you do not have are skipped."] }
+for _, e in ipairs(TRACKING) do
+    options[#options + 1] = { type = "toggle", key = "on_" .. e.id, label = e.label, half = true }
+end
+
 -- ---------------------------------------------------------------------------
 -- Frames
 -- ---------------------------------------------------------------------------
@@ -332,6 +407,8 @@ local function ShowTooltip(self)
     end
     if e.warn then
         GameTooltip:AddLine(L["Apply a poison to this weapon."], C.muted[1], C.muted[2], C.muted[3], true)
+    elseif e.track then
+        GameTooltip:AddLine(L["Tracking is off. Click to switch it on."], C.muted[1], C.muted[2], C.muted[3], true)
     elseif self.spell then
         GameTooltip:AddLine(L["Click to cast %s."]:format(SpellName(self.spell) or "?"), C.muted[1], C.muted[2], C.muted[3], true)
     end
@@ -433,9 +510,8 @@ end
 
 local function Collect(self)
     local class = PlayerClass()
-    local list = class and CLASSES[class]
+    local list = class and CLASSES[class] or {}
     local out = {}
-    if not list then return out end
     if UnitIsDeadOrGhost and UnitIsDeadOrGhost("player") then return out end
     if UnitOnTaxi and UnitOnTaxi("player") then return out end
     local auras = ScanAuras()
@@ -487,6 +563,22 @@ local function Collect(self)
                 end
             end
         end
+    end
+    -- Searches of your gathering professions that are switched off. A client
+    -- with only one search at a time asks for none while one of them is on.
+    local on, multi = ActiveTracking()
+    local missing, anyOn = {}, false
+    for _, e in ipairs(TRACKING) do
+        if self.db["on_" .. e.id] and Known(e.track) then
+            if Tracking(on, e) then
+                anyOn = true
+            else
+                missing[#missing + 1] = e
+            end
+        end
+    end
+    if multi or not anyOn then
+        for _, e in ipairs(missing) do out[#out + 1] = { entry = e, spell = e.track } end
     end
     self.soonest = soonest
     return out
@@ -674,6 +766,7 @@ M:On("PLAYER_ALIVE", Request)
 M:On("PLAYER_UNGHOST", Request)
 M:On("PLAYER_CONTROL_GAINED", Request)
 M:On("CVAR_UPDATE", Request)
+M:On("MINIMAP_UPDATE_TRACKING", Request)
 
 -- Just before combat lockdown starts the row may still be hidden.
 M:On("PLAYER_REGEN_DISABLED", function()

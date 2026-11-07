@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.15.0
+- Missing buffs: gathering tracking. Find Minerals, Find Herbs and Find Fish show up while the search of a profession you have is switched off (Find Treasure for dwarves can be switched on). Click to switch it on.
+
 ## 2.14.2
 - New logo: the AllInOne crest (bag, gold, quest scroll and cogwheel) in the addon list, the options window and on the minimap button.
 
