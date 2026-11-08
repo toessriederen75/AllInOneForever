@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.27.0
+- Bags: mark items. Alt + left click puts a yellow frame around an item (for all characters, every stack of it), Alt + right click takes it away. Marked items are never sold as junk; the tooltip says it is marked.
+
 ## 2.26.0
 - Item tooltips: how many of the item each of your characters holds in bags and bank (switched on). The guild bank can be added in the options ("Include the guild bank", off by default).
 

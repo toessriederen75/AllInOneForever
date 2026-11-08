@@ -101,6 +101,25 @@ local function Decorate(b)
     b.aioLock:SetPoint("TOPRIGHT", -1, -1)
     b.aioLock:Hide()
 
+    -- The yellow frame of a marked item (Alt + left click marks, Alt + right
+    -- click takes it away again).
+    if not b.aioMark then
+        b.aioMark = {}
+        local function edge(p1, p2, w, h)
+            local t = b:CreateTexture(nil, "OVERLAY", nil, 3)
+            t:SetColorTexture(1, 0.85, 0.1, 1)
+            t:SetPoint(p1)
+            t:SetPoint(p2)
+            if w then t:SetWidth(w) else t:SetHeight(h) end
+            t:Hide()
+            b.aioMark[#b.aioMark + 1] = t
+        end
+        edge("TOPLEFT", "TOPRIGHT", nil, 2)
+        edge("BOTTOMLEFT", "BOTTOMRIGHT", nil, 2)
+        edge("TOPLEFT", "BOTTOMLEFT", 2, nil)
+        edge("TOPRIGHT", "BOTTOMRIGHT", 2, nil)
+    end
+
     b.aioJunk = b:CreateTexture(nil, "OVERLAY")
     b.aioJunk:SetTexture("Interface\\Buttons\\UI-GroupLoot-Coin-Up")
     b.aioJunk:SetSize(14, 14)
@@ -189,7 +208,43 @@ function AIO:Paint(b, icon, count, quality, locked, link)
         b.aioLevel:Hide()
     end
     b.aioJunk:SetShown(icon ~= nil and s.junkIcon and quality == 0)
+    local marked = icon ~= nil and self:IsMarked(link)
+    for _, t in ipairs(b.aioMark) do t:SetShown(marked) end
     HideExtras(b)
+end
+
+-- ---------------------------------------------------------------------------
+-- Marked items: Alt + left click marks an item (a yellow frame, for all
+-- characters), Alt + right click takes the mark away. Marked items are never
+-- sold as junk.
+-- ---------------------------------------------------------------------------
+
+function AIO:IsMarked(link)
+    local id = link and self.ItemID(link)
+    return id ~= nil and self.settings.marked ~= nil and self.settings.marked[id] == true
+end
+
+--- Alt + click on a slot: mark or unmark its item. True when it was one.
+function AIO:MarkClick(b, button)
+    if not IsAltKeyDown() then return false end
+    local id = b.link and self.ItemID(b.link)
+    if not id then return false end
+    self.settings.marked = self.settings.marked or {}
+    if button == "RightButton" then
+        self.settings.marked[id] = nil
+    else
+        self.settings.marked[id] = true
+    end
+    self:RepaintAll()
+    if b:IsMouseOver() and b:GetScript("OnEnter") then b:GetScript("OnEnter")(b) end
+    return true
+end
+
+local function MarkTip(link)
+    if AIO:IsMarked(link) then
+        GameTooltip:AddLine(L["Marked (Alt + right click to remove)"], 1, 0.85, 0.1)
+        GameTooltip:Show()
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -230,6 +285,7 @@ local function LiveEnter(self)
         return
     end
     GameTooltip:Show()
+    MarkTip(self.link)
     if (IsModifiedClick and IsModifiedClick("COMPAREITEMS"))
        or (GetCVarBool and GetCVarBool("alwaysCompareItems")) then
         if GameTooltip_ShowCompareItem then GameTooltip_ShowCompareItem(GameTooltip) end
@@ -271,6 +327,8 @@ function AIO:LiveButton(window, bag, slot)
     b:SetScript("OnEnter", LiveEnter)
     b:SetScript("OnLeave", LiveLeave)
     b.UpdateTooltip = LiveEnter
+    -- After Blizzard's own click (which does nothing with Alt held).
+    b:HookScript("OnClick", function(self, button) AIO:MarkClick(self, button) end)
     window.live[bag][slot] = b
     return b
 end
@@ -309,6 +367,7 @@ local function StaticEnter(self)
         return
     end
     GameTooltip:Show()
+    MarkTip(self.link)
 end
 
 local function GuildLive(self)
@@ -316,6 +375,7 @@ local function GuildLive(self)
 end
 
 local function StaticClick(self, button)
+    if AIO:MarkClick(self, button) then return end
     if self.link and HandleModifiedItemClick and HandleModifiedItemClick(self.link) then return end
     if GuildLive(self) then
         if button == "RightButton" then

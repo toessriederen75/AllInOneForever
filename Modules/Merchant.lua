@@ -401,7 +401,7 @@ function Junk:Collect()
                 local quality = info.quality
                 if quality == nil or quality < 0 then quality = select(3, AIO.ItemInfo(info.hyperlink)) end
                 local price = SellPrice(info.hyperlink)
-                if price > 0 and quality == 0 then
+                if price > 0 and quality == 0 and not AIO:IsMarked(info.hyperlink) then
                     items[#items + 1] = { bag = bag, slot = slot, id = id,
                                           value = price * (info.stackCount or 1) }
                 end

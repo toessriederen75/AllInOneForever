@@ -71,6 +71,7 @@ if GetLocale() == "deDE" then
     L["Replace the default guild bank"] = "Standard-Gildenbank ersetzen"
     L["Needs /reload"]        = "Braucht /reload"
     L["Item counts in tooltips"]        = "Anzahl pro Charakter im Tooltip"
+    L["Marked (Alt + right click to remove)"] = "Markiert (Alt + Rechtsklick entfernt)"
     L["Shows how many of an item each of your characters holds in bags and bank."] = "Zeigt, wie viele davon jeder deiner Charaktere in Taschen und Bank hat."
     L["Include the guild bank"]         = "Auch die Gildenbank zählen"
     L["Also counts what lies in your guild bank (as last seen)."] = "Zählt auch, was in deiner Gildenbank liegt (wie zuletzt gesehen)."
