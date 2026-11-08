@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.25.0
+- Info bar: a right click on the experience segment resets XP per hour; the tooltip shows how long it has been measured.
+
 ## 2.24.2
 - Bags (WoW Forever): the bag window opens again. Blizzard's bag frames are now kept shown but invisible off screen, so the game sees them as open and our window follows.
 

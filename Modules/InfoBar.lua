@@ -61,6 +61,9 @@ if GetLocale() == "deDE" then
     L["Current"]            = "Aktuell"
     L["Remaining"]          = "Verbleibend"
     L["XP per hour"]        = "EP pro Stunde"
+    L["Measured for"]       = "Gemessen seit"
+    L["Right click: reset XP per hour"] = "Rechtsklick: EP pro Stunde zurücksetzen"
+    L["XP per hour reset."] = "EP pro Stunde zurückgesetzt."
     L["Time to level"]      = "Zeit bis zum Stufenaufstieg"
     L["Home latency"]       = "Latenz (Heim)"
     L["World latency"]      = "Latenz (Welt)"
@@ -189,6 +192,16 @@ local function StartSession()
     if session.started then return end
     session.started = true
     session.money = GetMoney()
+    session.time = GetTime()
+    session.xpGained = 0
+    session.lastXP = UnitXP("player") or 0
+    session.lastMax = UnitXPMax("player") or 1
+end
+
+--- Starts the XP per hour measurement again from now.
+local function ResetXP()
+    session.started = true
+    session.money = session.money or GetMoney()
     session.time = GetTime()
     session.xpGained = 0
     session.lastXP = UnitXP("player") or 0
@@ -431,7 +444,16 @@ local segments = {
             else
                 Line(L["XP per hour"], "-")
             end
+            if elapsed > 0 then Line(L["Measured for"], Duration(elapsed)) end
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(L["Right click: reset XP per hour"], C.muted[1], C.muted[2], C.muted[3])
             GameTooltip:Show()
+        end,
+        click = function(self, button)
+            if button ~= "RightButton" then return end
+            ResetXP()
+            AIO:Print(L["XP per hour reset."])
+            if self:IsMouseOver() and self:GetScript("OnEnter") then self:GetScript("OnEnter")(self) end
         end,
     },
     {
