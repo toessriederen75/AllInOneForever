@@ -9,7 +9,7 @@ One addon instead of a dozen, written to use as little memory and CPU as possibl
 
 ## Features
 
-- **Bags and guild bank** – one window each in Blizzard's modern look, with search, sorting, item level, quality borders, reagent bag and your other characters' items (offline view).
+- **Bags** – one window in Blizzard's modern look, with search, sorting, item level, quality borders, reagent bag, marked items, item counts per character in tooltips and your other characters' items (offline view).
 - **Merchants & NPCs** – sell junk, repair, keep reagents and ammunition stocked, accept and turn in quests, skip gossip.
 - **Buffs** – a row of your missing own buffs (click to cast, hold Alt to move), consumables tracker.
 - **Interface** – info bar (gold, durability, bag space, clock …), tooltips with IDs and item level, chat improvements, minimap button collector.
@@ -18,7 +18,7 @@ One addon instead of a dozen, written to use as little memory and CPU as possibl
 - **Danger alarm** – a sound for fatigue, drowning and being attacked while away.
 - **Comfort** – mail helpers, error filter, fast loot and other small automations.
 
-Slash commands: `/aio` (bags), `/aio guild`, `/aio options`, `/aio info`, `/aio map`.
+Slash commands: `/aio` (bags), `/aio options`, `/aio info`, `/aio map`.
 
 ## Installation
 

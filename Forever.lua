@@ -9,7 +9,10 @@ ns.dbName = "AllInOneForeverDB"
 -- No bank window of our own: Forever's bank (with its bank tabs) stays
 -- Blizzard's. What lies in the bank is still noted for tooltips and counts.
 ns.noBank = true
-ns.defaults = { replaceBags = true, replaceBank = false, replaceGuild = true, tooltipCounts = true,
+-- The same for the guild bank: Blizzard's window. The tabs you look at are
+-- still noted, for the guild bank line in tooltips (if switched on).
+ns.noGuild = true
+ns.defaults = { replaceBags = true, replaceBank = false, replaceGuild = false, tooltipCounts = true,
                 showKeyring = false }   -- Blizzard's Forever bags leave the keyring out
 -- Applied once to existing saved settings too (they were saved as "off" before).
-ns.resetOnce = { showKeyring = false, replaceBags = true, replaceGuild = true, tooltipCounts = true }
+ns.resetOnce = { showKeyring = false, replaceBags = true, tooltipCounts = true }

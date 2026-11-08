@@ -93,6 +93,11 @@ if ns.noBank then
         if general[i].label == L["Replace the default bank"] then table.remove(general, i) end
     end
 end
+if ns.noGuild then
+    for i = #general, 1, -1 do
+        if general[i].label == L["Replace the default guild bank"] then table.remove(general, i) end
+    end
+end
 
 local function WindowOptions(id, extra)
     local list = { { type = "header", label = L["Layout"] } }
@@ -135,13 +140,13 @@ if not ns.noBank then AIO:NewModule("bagsBank", {
     options = WindowOptions("bank"),
 }) end
 
-AIO:NewModule("bagsGuild", {
+if not ns.noGuild then AIO:NewModule("bagsGuild", {
     title = L["Guild Bank"],
     short = L["Columns and size of the guild bank window."],
     desc = L["Opens by itself at the guild vault; elsewhere it shows the tabs as last seen. /aio guild"],
     category = "bags",
     alwaysOn = true,
     options = WindowOptions("guild"),
-})
+}) end
 
 AIO.windowPages = { inventory = "bagsInventory", bank = "bagsBank", guild = "bagsGuild" }

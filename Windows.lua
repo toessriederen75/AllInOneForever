@@ -525,7 +525,7 @@ local guild = {
 function AIO:CreateWindows()
     self:CreateWindow("inventory", inventory)
     if not ns.noBank then self:CreateWindow("bank", bank) end
-    self:CreateWindow("guild", guild)
+    if not ns.noGuild then self:CreateWindow("guild", guild) end
     -- The bank button in the bags is lit exactly while the bank window is
     -- open, however it is opened or closed.
     local inv, b = self.windows.inventory, self.windows.bank

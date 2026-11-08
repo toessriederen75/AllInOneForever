@@ -738,6 +738,7 @@ function AIO:GuildOpened()
     if self.atGuild then return end
     self.atGuild = true
     self.guildQueried = {}
+    if ns.noGuild then return end
     if self.settings.replaceGuild then
         self:Ghost(_G.GuildBankFrame)
         local w = self.windows.guild
@@ -814,7 +815,7 @@ AIO:On("ADDON_LOADED", function(name)
             end
         end
         AIO:MigrateData()
-    elseif name == "Blizzard_GuildBankUI" and AIO.settings and AIO.settings.replaceGuild then
+    elseif name == "Blizzard_GuildBankUI" and not ns.noGuild and AIO.settings and AIO.settings.replaceGuild then
         AIO:Ghost(_G.GuildBankFrame)
     end
 end)
@@ -836,7 +837,7 @@ AIO:On("PLAYER_LOGIN", function()
         Step(AIO.CreateWindows, AIO)
         Step(AIO.HookBlizzardBags, AIO)
         Step(AIO.HookTooltips, AIO)
-        if AIO.settings.replaceGuild and _G.GuildBankFrame then Step(AIO.Ghost, AIO, _G.GuildBankFrame) end
+        if not ns.noGuild and AIO.settings.replaceGuild and _G.GuildBankFrame then Step(AIO.Ghost, AIO, _G.GuildBankFrame) end
     end
     AIO:EnableModules()
 end)
@@ -963,7 +964,7 @@ SlashCmdList.ALLINONE = function(msg)
         AIO:Toggle("inventory")
     elseif cmd == "bank" and not ns.noBank then
         AIO:Toggle("bank")
-    elseif cmd == "guild" then
+    elseif cmd == "guild" and not ns.noGuild then
         AIO:Toggle("guild")
     elseif cmd == "sort" and AIO.Sort then
         AIO:Sort(rest == "bank" and "bank" or "inventory")

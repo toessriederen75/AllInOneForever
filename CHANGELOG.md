@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.28.0
+- WoW Forever: no own guild bank window any more – the guild bank is Blizzard's again. The tabs you look at are still noted for the guild bank line in tooltips (if switched on).
+
 ## 2.27.0
 - Bags: mark items. Alt + left click puts a yellow frame around an item (for all characters, every stack of it), Alt + right click takes it away. Marked items are never sold as junk; the tooltip says it is marked.
 
