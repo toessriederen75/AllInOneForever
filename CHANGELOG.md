@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.25.1
+- Bank (WoW Forever): Blizzard's bank window opens again. After closing the bank it was moved off screen and made invisible, so the next visit showed nothing.
+
 ## 2.25.0
 - Info bar: a right click on the experience segment resets XP per hour; the tooltip shows how long it has been measured.
 

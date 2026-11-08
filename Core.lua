@@ -702,7 +702,9 @@ end
 --- was bought, when the bank closes, or with `hide`.
 function AIO:BlizzardBank(show)
     local f = _G.BankFrame
-    if not f then return end
+    -- Without our bank window Blizzard's bank is never touched (moving it
+    -- away here made it open off screen and invisible).
+    if not f or ns.noBank or not self.settings.replaceBank then return end
     f.aioOnScreen = show and true or nil
     if show then
         f:SetAlpha(1)
