@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.24.1
+- Skip gossip: no error when WoW Forever hands out the NPC as a "secret" value.
+
 ## 2.24.0
 - WoW Forever: Blizzard's bag functions are no longer replaced but only followed. Replacing them "tainted" Blizzard's interface, so the game blocked actions such as buying a bank tab or using some items from the bags.
 

@@ -435,6 +435,9 @@ local lastSkip = { guid = nil, time = 0, closed = true }
 G:On("GOSSIP_SHOW", function()
     if ModifierDown(G.db.modifier) then return end
     local guid = Call(_G.UnitGUID, "npc") or "?"
+    -- WoW Forever can hand out the NPC's GUID as a "secret" value, which may
+    -- not be compared; then the time alone keeps it to once per talk.
+    if _G.issecretvalue and _G.issecretvalue(guid) then guid = "secret" end
     -- Only once per interaction: not again before the window has closed and a moment passed.
     if lastSkip.guid == guid and (not lastSkip.closed or GetTime() - lastSkip.time < 2) then return end
     if NumGossipQuests() > 0 then return end
