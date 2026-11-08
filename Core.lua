@@ -244,6 +244,7 @@ AIO.defaults = {
     replaceBank   = true,
     replaceGuild  = true,
     tooltipCounts = true,
+    tooltipGuild  = false,   -- the guild bank in the counts: only when switched on
     qualityBorder = true,
     showKeyring   = true,
     emptySlots    = true,

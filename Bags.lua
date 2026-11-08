@@ -48,7 +48,8 @@ local general = {
           AIO.settings.slotGap = v
           for _, w in pairs(AIO.windows) do w.laidOut = false; w:RequestRefresh() end
       end },
-    Toggle("tooltipCounts", L["Item counts in tooltips"], L["Shows how many of an item each character and the guild bank hold."]),
+    Toggle("tooltipCounts", L["Item counts in tooltips"], L["Shows how many of an item each of your characters holds in bags and bank."]),
+    Toggle("tooltipGuild",  L["Include the guild bank"], L["Also counts what lies in your guild bank (as last seen)."]),
 
     { type = "header", label = L["Arrangement & sorting"] },
     Toggle("partialTop", L["Unfilled row at the top"], L["Like the default bags: the last row is full and the gaps sit at the top."]),

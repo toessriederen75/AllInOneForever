@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.26.0
+- Item tooltips: how many of the item each of your characters holds in bags and bank (switched on). The guild bank can be added in the options ("Include the guild bank", off by default).
+
 ## 2.25.1
 - Bank (WoW Forever): Blizzard's bank window opens again. After closing the bank it was moved off screen and made invisible, so the next visit showed nothing.
 

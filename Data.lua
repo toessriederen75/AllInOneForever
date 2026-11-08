@@ -389,6 +389,7 @@ function AIO:CountLines(itemID)
         local label = c and self.ClassColored(who, c.class) or ("|cff40ff40" .. who .. "|r")
         for _, where in ipairs(WHERE) do
             local n = row[where]
+            if where == "guild" and not self.settings.tooltipGuild then n = nil end
             if n then
                 lines[#lines + 1] = { label .. " |cffaaaaaa- " .. WHERE_LABEL[where] .. "|r", tostring(n) }
                 total, places = total + n, places + 1
@@ -422,7 +423,8 @@ local ITEM_CALLS = { "SetBagItem", "SetInventoryItem", "SetGuildBankItem", "SetM
                      "SetAuctionSellItem", "SetTradePlayerItem", "SetTradeTargetItem" }
 
 function AIO:HookTooltips()
-    local function add(tooltip, link)
+    local add
+    local function addLines(tooltip, link)
         if not AIO.settings.tooltipCounts or tooltip.aioDone then return end
         if not link and tooltip.GetItem then link = select(2, tooltip:GetItem()) end
         local id = AIO.ItemID(link)
@@ -436,6 +438,9 @@ function AIO:HookTooltips()
         end
         tooltip:Show()
     end
+    -- Forever can hand out "secret" item data in some tooltips: then this
+    -- tooltip simply gets no counts instead of an error.
+    add = function(tooltip, link) pcall(addLines, tooltip, link) end
     local function clear(tooltip) tooltip.aioDone = nil end
 
     local tips = { GameTooltip, ItemRefTooltip }
