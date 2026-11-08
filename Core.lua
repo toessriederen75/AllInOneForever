@@ -565,18 +565,34 @@ end
 
 --- Modern clients (WoW Forever): Blizzard's own functions are not replaced
 --- (that taints them, and the game then blocks things like buying a bank
---- tab or using an item). Blizzard's bag frames keep working, parented to a
---- hidden frame; ours simply follows whether they are open.
+--- tab or using an item). Blizzard's bag frames keep working, invisible and
+--- far off screen; ours simply follows whether they are open.
 function AIO:MirrorBlizzardBags()
-    local hidden = CreateFrame("Frame")
-    hidden:Hide()
     local frames = {}
     if _G.ContainerFrameCombinedBags then frames[#frames + 1] = _G.ContainerFrameCombinedBags end
     for i = 1, (_G.NUM_CONTAINER_FRAMES or 13) do
         local f = _G["ContainerFrame" .. i]
         if f then frames[#frames + 1] = f end
     end
-    for _, f in ipairs(frames) do f:SetParent(hidden) end
+    -- Invisible and out of reach, but really shown, so Blizzard's own code
+    -- (which bags are open, the bank, item use) works exactly as without us.
+    local function away(f)
+        f:SetAlpha(0)
+        f:EnableMouse(false)
+        f:ClearAllPoints()
+        f:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", -4000, -4000)
+    end
+    for _, f in ipairs(frames) do
+        f:HookScript("OnShow", away)
+        if f:IsShown() then away(f) end
+    end
+    if type(_G.UpdateContainerFrameAnchors) == "function" then
+        hooksecurefunc("UpdateContainerFrameAnchors", function()
+            for _, f in ipairs(frames) do
+                if f:IsShown() then away(f) end
+            end
+        end)
+    end
 
     local mirror = {}
     function mirror.open()

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.24.2
+- Bags (WoW Forever): the bag window opens again. Blizzard's bag frames are now kept shown but invisible off screen, so the game sees them as open and our window follows.
+
 ## 2.24.1
 - Skip gossip: no error when WoW Forever hands out the NPC as a "secret" value.
 
