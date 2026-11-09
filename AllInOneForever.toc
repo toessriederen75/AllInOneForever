@@ -36,3 +36,4 @@ Modules\Chat.lua
 Modules\SpellRanks.lua
 Modules\Gtfo.lua
 Modules\Travel.lua
+Modules\Sparkle.lua

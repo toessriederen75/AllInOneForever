@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.29.0
+- New: Sparkles (Display). Quest items glitter again – the game's own glitter, which its outline setting hides. The herb or mining vein in front of you gets a golden glow with the icon of what it gives and its name in the colour of the skill-up chance (red with the skill needed when yours is too low). Only for your own professions if wanted; reach adjustable. Names not on the list are learnt the first time you gather them. Every game setting changed for it is put back when you switch it off.
+
 ## 2.28.0
 - WoW Forever: no own guild bank window any more – the guild bank is Blizzard's again. The tabs you look at are still noted for the guild bank line in tooltips (if switched on).
 
