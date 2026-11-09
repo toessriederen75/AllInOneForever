@@ -41,6 +41,15 @@ if GetLocale() == "deDE" then
     L["Skill %d needed"]       = "Fertigkeit %d nötig"
     L["Sparkles: quest items %s, herbs %s, veins %s. Nodes learnt: %d."] =
         "Glitzern: Questgegenstände %s, Kräuter %s, Adern %s. Gelernte Vorkommen: %d."
+    L["Search all around"]     = "Rundum suchen"
+    L["Herbs and veins are found all around you, not only in front of you. The game's interact key then also reaches things beside and behind you."] =
+        "Kräuter und Adern werden rund um dich gefunden, nicht nur vor dir. Die Interaktionstaste des Spiels erreicht dann auch Dinge neben und hinter dir."
+    L["Notice when one is near"] = "Hinweis, wenn eines in der Nähe ist"
+    L["A symbol in a fixed place on screen with the name of the herb or vein nearby. Hold Alt and drag it to move it."] =
+        "Ein Symbol an fester Stelle auf dem Bildschirm mit dem Namen des Krauts oder der Ader in der Nähe. Mit gedrückter Alt-Taste verschiebst du es."
+    L["Sound for the notice"]  = "Ton zum Hinweis"
+    L["Mining vein nearby"]    = "Erzader in der Nähe"
+    L["Herb nearby"]           = "Kraut in der Nähe"
     L["on"]                    = "an"
     L["off"]                   = "aus"
 end
@@ -51,7 +60,8 @@ local M = AIO:NewModule("sparkle", {
     desc     = L["Objects you need for a quest glitter again, and the herb or vein in front of you gets a golden glow with what it gives and how much skill-up it still brings."],
     category = "display",
     default  = true,
-    defaults = { quest = true, herb = true, ore = true, onlyMine = true, label = true, reach = 20 },
+    defaults = { quest = true, herb = true, ore = true, onlyMine = true, label = true, reach = 30,
+                 around = true, alert = true, sound = true },
     options  = {
         { type = "toggle", key = "quest", label = L["Quest items glitter"],
           desc = L["The game's own glitter on objects you can loot for a quest. The outline around objects under the mouse is switched off for it, because the game shows only one of the two."] },
@@ -61,7 +71,12 @@ local M = AIO:NewModule("sparkle", {
           desc = L["No glow on herbs without Herbalism and on veins without Mining."] },
         { type = "toggle", key = "label", label = L["Show what it gives"],
           desc = L["Icon and name above the node; the name in the colour of the skill-up chance."] },
-        { type = "slider", key = "reach", label = L["Reach (yards)"], min = 10, max = 40, step = 5 },
+        { type = "toggle", key = "around", label = L["Search all around"],
+          desc = L["Herbs and veins are found all around you, not only in front of you. The game's interact key then also reaches things beside and behind you."] },
+        { type = "toggle", key = "alert", label = L["Notice when one is near"],
+          desc = L["A symbol in a fixed place on screen with the name of the herb or vein nearby. Hold Alt and drag it to move it."] },
+        { type = "toggle", key = "sound", label = L["Sound for the notice"] },
+        { type = "slider", key = "reach", label = L["Reach (yards)"], min = 10, max = 60, step = 5 },
     },
 })
 
@@ -290,8 +305,8 @@ local PLATE_CVAR = "SoftTargetNameplateInteract"
 local function SoftCVars()
     return {
         SoftTargetInteract = "3",
-        SoftTargetInteractRange = tostring(M.db.reach or 20),
-        SoftTargetInteractArc = "1",
+        SoftTargetInteractRange = tostring(M.db.reach or 30),
+        SoftTargetInteractArc = M.db.around and "2" or "1",
     }
 end
 
@@ -395,8 +410,87 @@ local function PlateCVar(on)
     plateOn = on
 end
 
+local alert, alerted
+
+local function Alert()
+    if alert then return alert end
+    local f = CreateFrame("Frame", "AllInOneSparkleAlert", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    f:SetSize(220, 42)
+    f:SetFrameStrata("MEDIUM")
+    f:SetClampedToScreen(true)
+    if f.SetBackdrop then
+        f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                        edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
+        f:SetBackdropColor(0.05, 0.05, 0.05, 0.75)
+        f:SetBackdropBorderColor(1, 0.82, 0.3, 0.9)
+    end
+    f.icon = f:CreateTexture(nil, "ARTWORK")
+    f.icon:SetSize(30, 30)
+    f.icon:SetPoint("LEFT", 6, 0)
+    f.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    f.name = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.name:SetPoint("TOPLEFT", f.icon, "TOPRIGHT", 8, -1)
+    f.name:SetPoint("RIGHT", -8, 0)
+    f.name:SetJustifyH("LEFT")
+    f.sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    f.sub:SetPoint("BOTTOMLEFT", f.icon, "BOTTOMRIGHT", 8, 1)
+    f.sub:SetPoint("RIGHT", -8, 0)
+    f.sub:SetJustifyH("LEFT")
+    -- A soft pulse on the icon, so it catches the eye.
+    local ag = f.icon:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local a = ag:CreateAnimation("Alpha")
+    a:SetFromAlpha(1)
+    a:SetToAlpha(0.45)
+    a:SetDuration(0.6)
+    f.pulse = ag
+    -- Alt + drag moves it.
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", function(self) if IsAltKeyDown() then self:StartMoving() end end)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local point, _, rel, x, y = self:GetPoint(1)
+        M.db.alertPos = { point, rel, x, y }
+    end)
+    local pos = M.db.alertPos
+    if pos then f:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
+    else f:SetPoint("CENTER", UIParent, "CENTER", 0, 180) end
+    f:SetScript("OnShow", function(self) self.pulse:Play() end)
+    f:SetScript("OnHide", function(self) self.pulse:Stop() end)
+    f:Hide()
+    alert = f
+    return f
+end
+
+local function ShowAlert(node, name)
+    if not M.db.alert then if alert then alert:Hide() end return end
+    local f = Alert()
+    local rank = Skill(node.kind)
+    local low = rank and node.skill and rank < node.skill
+    f.icon:SetTexture(ItemIcon(node.item) or ICON[node.kind])
+    f.icon:SetDesaturated(low and true or false)
+    f.name:SetText(name or "")
+    f.name:SetTextColor(SkillColor(rank, node.skill))
+    if low then
+        f.sub:SetText(L["Skill %d needed"]:format(node.skill))
+        f.sub:SetTextColor(1, 0.3, 0.3)
+    else
+        f.sub:SetText(node.kind == "ore" and L["Mining vein nearby"] or L["Herb nearby"])
+        f.sub:SetTextColor(0.85, 0.85, 0.85)
+    end
+    f:Show()
+    if M.db.sound and alerted ~= name then
+        PlaySound(SOUNDKIT and SOUNDKIT.MAP_PING or 3175, "Master")
+    end
+    alerted = name
+end
+
 local function HideGlow()
     if glow then glow:Hide() end
+    if alert then alert:Hide() end
+    alerted = nil
     current, current_name = nil, nil
     PlateCVar(false)
 end
@@ -441,12 +535,13 @@ function Place()
     if not plate then
         -- The nameplate turns up a moment after the setting is on.
         tries = tries + 1
+        f:Hide()
         if tries <= 8 and C_Timer then
-            f:Hide()
             local node = current
             C_Timer.After(0.1, function() if current == node then Place() end end)
-            return
         end
+        -- Without a nameplate the notice alone tells about the node.
+        return
     end
     tries = 0
     M.lastPlate = plate and true or false
@@ -474,13 +569,7 @@ function Place()
         f.text:Hide()
     end
     f:ClearAllPoints()
-    if plate then
-        f:SetPoint("BOTTOM", plate, "TOP", 0, -12)
-    else
-        -- No nameplate from the game: show it above your character, where
-        -- the node in front of you usually is.
-        f:SetPoint("CENTER", UIParent, "CENTER", 0, 90)
-    end
+    f:SetPoint("BOTTOM", plate, "TOP", 0, -12)
     f:Show()
 end
 
@@ -495,6 +584,7 @@ function M:Update()
     if not node or not self.db[node.kind] then HideGlow() return end
     if self.db.onlyMine and not Skill(node.kind) then HideGlow() return end
     current, current_name, tries = node, name, 0
+    ShowAlert(node, name)
     PlateCVar(true)
     Place()
 end

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.31.0
+- Sparkles: a notice with icon, name and skill colour shows in a fixed place on screen whenever a herb or vein is near (Alt + drag to move it), with a short sound (can be switched off). Herbs and veins are now found all around you, not only straight ahead ("Search all around"); reach up to 60 yards. The glow on the node itself stays, where the game gives it a nameplate.
+
 ## 2.30.2
 - Sparkles: German vein names as the game uses them (Kupfervorkommen, Zinnvorkommen …), so skill and icon are right. The node's nameplate is also taken when the game announces it, so the glow sits on the node more often. `/aio sparkle` also lists the nameplates that came up.
 
