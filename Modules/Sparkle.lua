@@ -140,6 +140,9 @@ local SKILL_NAMES = {
 }
 local SKILL_LINE = { herb = 182, ore = 186 }
 
+-- Shared with the gathering map (Gather.lua).
+ns.GatherData = { nodes = NODES, icons = ICON, spells = GATHER_SPELL }
+
 local function Readable(v)
     return v ~= nil and not (_G.issecretvalue and _G.issecretvalue(v))
 end

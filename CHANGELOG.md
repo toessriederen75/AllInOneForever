@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.30.0
+- New: Gathering map (Maps). Every herb, mining vein and treasure chest you gather is noted with its place and shown on the world map and the minimap (with the icon of what it gives; pointing at it tells the name and how often you found it). All your characters fill the same map. Kinds, maps and pin size can be switched in the options. `/aio gather` tells what is known in your zone, `/aio gather clear` forgets the zone.
+
 ## 2.29.0
 - New: Sparkles (Display). Quest items glitter again – the game's own glitter, which its outline setting hides. The herb or mining vein in front of you gets a golden glow with the icon of what it gives and its name in the colour of the skill-up chance (red with the skill needed when yours is too low). Only for your own professions if wanted; reach adjustable. Names not on the list are learnt the first time you gather them. Every game setting changed for it is put back when you switch it off.
 

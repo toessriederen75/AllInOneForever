@@ -37,3 +37,4 @@ Modules\SpellRanks.lua
 Modules\Gtfo.lua
 Modules\Travel.lua
 Modules\Sparkle.lua
+Modules\Gather.lua
