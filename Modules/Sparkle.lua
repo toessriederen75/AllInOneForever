@@ -70,8 +70,9 @@ local M = AIO:NewModule("sparkle", {
 -- ---------------------------------------------------------------------------
 
 local NODES = {}
+local DE = GetLocale() == "deDE"
 local function Add(kind, skill, item, ...)
-    local node = { kind = kind, skill = skill, item = item }
+    local node = { kind = kind, skill = skill, item = item, name = (DE and select(2, ...)) or (...) }
     for i = 1, select("#", ...) do NODES[(select(i, ...)):lower()] = node end
 end
 
@@ -140,6 +141,55 @@ local SKILL_NAMES = {
 }
 local SKILL_LINE = { herb = 182, ore = 186 }
 
+-- The same nodes by their object ID (part of the GUID), for when the game
+-- hands out no readable name.
+local OBJECTS = {}
+local function Obj(name, ...)
+    local node = NODES[name:lower()]
+    for i = 1, select("#", ...) do OBJECTS[(select(i, ...))] = node end
+end
+Obj("Peacebloom", 1618, 3724)
+Obj("Silverleaf", 1617, 3725)
+Obj("Earthroot", 1619, 3726)
+Obj("Mageroyal", 1620, 3727)
+Obj("Briarthorn", 1621, 3729)
+Obj("Bruiseweed", 1622, 3730)
+Obj("Stranglekelp", 2045)
+Obj("Wild Steelbloom", 1623)
+Obj("Grave Moss", 1628)
+Obj("Kingsblood", 1624)
+Obj("Liferoot", 2041)
+Obj("Fadeleaf", 2042)
+Obj("Goldthorn", 2046)
+Obj("Khadgar's Whisker", 2043)
+Obj("Wintersbite", 2044)
+Obj("Firebloom", 2866)
+Obj("Purple Lotus", 142140)
+Obj("Arthas' Tears", 142141)
+Obj("Sungrass", 142142)
+Obj("Blindweed", 142143)
+Obj("Ghost Mushroom", 142144)
+Obj("Gromsblood", 142145)
+Obj("Golden Sansam", 176583)
+Obj("Dreamfoil", 176584)
+Obj("Mountain Silversage", 176586)
+Obj("Plaguebloom", 176587)
+Obj("Icecap", 176588)
+Obj("Black Lotus", 176589)
+Obj("Copper Vein", 1731)
+Obj("Tin Vein", 1732)
+Obj("Silver Vein", 1733, 73940)
+Obj("Gold Vein", 1734, 73941)
+Obj("Iron Deposit", 1735)
+Obj("Incendicite Mineral Vein", 1610, 1667)
+Obj("Lesser Bloodstone Deposit", 2653)
+Obj("Indurium Mineral Vein", 19903)
+Obj("Mithril Deposit", 2040, 123310)
+Obj("Truesilver Deposit", 2047, 123309)
+Obj("Dark Iron Deposit", 165658)
+Obj("Small Thorium Vein", 324, 123848)
+Obj("Rich Thorium Vein", 175404, 177388)
+
 -- Shared with the gathering map (Gather.lua).
 ns.GatherData = { nodes = NODES, icons = ICON, spells = GATHER_SPELL }
 
@@ -153,7 +203,15 @@ local function Learnt()
     return db.learnt
 end
 
-local function NodeFor(name)
+local function ObjectID(guid)
+    if not Readable(guid) or type(guid) ~= "string" then return nil end
+    local kind, id = guid:match("^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    if kind == "GameObject" then return tonumber(id) end
+end
+
+local function NodeFor(name, guid)
+    local id = ObjectID(guid)
+    if id and OBJECTS[id] then return OBJECTS[id] end
     if not Readable(name) or type(name) ~= "string" or name == "" then return nil end
     local key = name:lower()
     local node = NODES[key]
@@ -343,22 +401,51 @@ local function HideGlow()
     PlateCVar(false)
 end
 
+local function Same(unit, guid)
+    if UnitIsUnit then
+        local ok, same = pcall(UnitIsUnit, unit, "softinteract")
+        if ok and same == true then return true end
+    end
+    if guid then
+        local g = UnitGUID(unit)
+        return Readable(g) and g == guid
+    end
+end
+
+--- The nameplate the game puts on the node in front of you.
+local function FindPlate()
+    if not C_NamePlate then return nil end
+    if C_NamePlate.GetNamePlateForUnit then
+        local ok, plate = pcall(C_NamePlate.GetNamePlateForUnit, "softinteract")
+        if ok and plate then return plate end
+    end
+    if C_NamePlate.GetNamePlates then
+        local guid = UnitGUID("softinteract")
+        if not Readable(guid) then guid = nil end
+        for _, plate in ipairs(C_NamePlate.GetNamePlates() or {}) do
+            local unit = plate.namePlateUnitToken or (plate.UnitFrame and plate.UnitFrame.unit)
+            if unit and Same(unit, guid) then return plate end
+        end
+    end
+end
+
 local Place
 function Place()
     if not current then return end
-    local plate = C_NamePlate and C_NamePlate.GetNamePlateForUnit and C_NamePlate.GetNamePlateForUnit("softinteract")
+    local plate = FindPlate()
     local f = Glow()
     if not plate then
-        f:Hide()
         -- The nameplate turns up a moment after the setting is on.
         tries = tries + 1
         if tries <= 8 and C_Timer then
+            f:Hide()
             local node = current
             C_Timer.After(0.1, function() if current == node then Place() end end)
+            return
         end
-        return
     end
     tries = 0
+    M.lastPlate = plate and true or false
     local node = current
     local rank = Skill(node.kind)
     local low = rank and node.skill and rank < node.skill
@@ -373,7 +460,7 @@ function Place()
         f.icon:SetTexture(ItemIcon(node.item) or ICON[node.kind])
         f.icon:SetDesaturated(low and true or false)
         f.icon:Show()
-        local label = current_name
+        local label = current_name or ""
         if low then label = label .. " – " .. L["Skill %d needed"]:format(node.skill) end
         f.text:SetText(label)
         f.text:SetTextColor(SkillColor(rank, node.skill))
@@ -383,14 +470,24 @@ function Place()
         f.text:Hide()
     end
     f:ClearAllPoints()
-    f:SetPoint("BOTTOM", plate, "TOP", 0, -12)
+    if plate then
+        f:SetPoint("BOTTOM", plate, "TOP", 0, -12)
+    else
+        -- No nameplate from the game: show it above your character, where
+        -- the node in front of you usually is.
+        f:SetPoint("CENTER", UIParent, "CENTER", 0, 90)
+    end
     f:Show()
 end
 
 function M:Update()
     if not (self.enabled and (self.db.herb or self.db.ore)) then HideGlow() return end
-    local name = UnitExists("softinteract") and UnitName("softinteract")
-    local node = NodeFor(name)
+    local name = UnitName("softinteract")
+    local guid = UnitGUID("softinteract")
+    local node = NodeFor(name, guid)
+    if not (Readable(name) and type(name) == "string" and name ~= "") then
+        name = node and node.name
+    end
     if not node or not self.db[node.kind] then HideGlow() return end
     if self.db.onlyMine and not Skill(node.kind) then HideGlow() return end
     current, current_name, tries = node, name, 0
@@ -482,4 +579,12 @@ function M:Slash()
     for _ in pairs(Learnt()) do n = n + 1 end
     self:Print(L["Sparkles: quest items %s, herbs %s, veins %s. Nodes learnt: %d."],
         s(self.db.quest), s(self.db.herb), s(self.db.ore), n)
+    -- What the module sees right now (stand in front of a node and type it).
+    local name, guid = UnitName("softinteract"), UnitGUID("softinteract")
+    local node = NodeFor(name, guid)
+    self:Print(("Soft target: name=%s guid=%s node=%s skill=%s/%s plate=%s showing=%s cvars: interact=%s plate=%s"):format(
+        Readable(name) and tostring(name) or "secret", Readable(guid) and tostring(guid) or "secret",
+        node and node.kind or "-", tostring(node and Skill(node.kind)), tostring(node and node.skill),
+        tostring(FindPlate() ~= nil), tostring(glow and glow:IsShown() or false),
+        tostring(GetCV("SoftTargetInteract")), tostring(GetCV(PLATE_CVAR))))
 end

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.30.1
+- Sparkles: the glow now finds herbs and veins also when WoW Forever hands out no readable name (by the node's object ID) and finds the node's nameplate in more ways. Without a nameplate the glow with name and icon shows above your character. `/aio sparkle` now also tells what the module sees in front of you.
+
 ## 2.30.0
 - New: Gathering map (Maps). Every herb, mining vein and treasure chest you gather is noted with its place and shown on the world map and the minimap (with the icon of what it gives; pointing at it tells the name and how often you found it). All your characters fill the same map. Kinds, maps and pin size can be switched in the options. `/aio gather` tells what is known in your zone, `/aio gather clear` forgets the zone.
 
