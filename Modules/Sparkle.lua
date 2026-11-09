@@ -107,19 +107,19 @@ Add("herb", 290, 13467, "Icecap", "Eiskappe")
 Add("herb", 300, 13468, "Black Lotus", "Schwarzer Lotus")
 
 -- Mining
-Add("ore",   1,  2770, "Copper Vein", "Kupferader")
-Add("ore",  65,  2771, "Tin Vein", "Zinnader")
+Add("ore",   1,  2770, "Copper Vein", "Kupfervorkommen", "Kupferader")
+Add("ore",  65,  2771, "Tin Vein", "Zinnvorkommen", "Zinnader")
 Add("ore",  65,  3340, "Incendicite Mineral Vein", "Pyrophormineralvorkommen")
-Add("ore",  75,  2775, "Silver Vein", "Silberader", "Ooze Covered Silver Vein", "Schlammbedeckte Silberader")
-Add("ore",  75,  4278, "Lesser Bloodstone Deposit", "Geringe Blutsteinablagerung")
+Add("ore",  75,  2775, "Silver Vein", "Silbervorkommen", "Silberader", "Ooze Covered Silver Vein", "Schlammbedecktes Silbervorkommen", "Schlammbedeckte Silberader")
+Add("ore",  75,  4278, "Lesser Bloodstone Deposit", "Geringes Blutsteinvorkommen", "Geringe Blutsteinablagerung")
 Add("ore", 125,  2772, "Iron Deposit", "Eisenvorkommen")
 Add("ore", 150,  5833, "Indurium Mineral Vein", "Induriummineralvorkommen")
-Add("ore", 155,  2776, "Gold Vein", "Goldader", "Ooze Covered Gold Vein", "Schlammbedeckte Goldader")
-Add("ore", 175,  3858, "Mithril Deposit", "Mithrilablagerung", "Ooze Covered Mithril Deposit", "Schlammbedeckte Mithrilablagerung")
-Add("ore", 230,  7911, "Truesilver Deposit", "Echtsilberablagerung", "Ooze Covered Truesilver Deposit", "Schlammbedeckte Echtsilberablagerung")
-Add("ore", 230, 11370, "Dark Iron Deposit", "Dunkeleisenablagerung")
-Add("ore", 245, 10620, "Small Thorium Vein", "Kleine Thoriumader", "Ooze Covered Thorium Vein", "Schlammbedeckte Thoriumader")
-Add("ore", 275, 10620, "Rich Thorium Vein", "Reiche Thoriumader", "Ooze Covered Rich Thorium Vein", "Schlammbedeckte reiche Thoriumader", "Hakkari Thorium Vein", "Hakkari-Thoriumader")
+Add("ore", 155,  2776, "Gold Vein", "Goldvorkommen", "Goldader", "Ooze Covered Gold Vein", "Schlammbedecktes Goldvorkommen", "Schlammbedeckte Goldader")
+Add("ore", 175,  3858, "Mithril Deposit", "Mithrilvorkommen", "Mithrilablagerung", "Ooze Covered Mithril Deposit", "Schlammbedecktes Mithrilvorkommen", "Schlammbedeckte Mithrilablagerung")
+Add("ore", 230,  7911, "Truesilver Deposit", "Echtsilbervorkommen", "Echtsilberablagerung", "Ooze Covered Truesilver Deposit", "Schlammbedecktes Echtsilbervorkommen", "Schlammbedeckte Echtsilberablagerung")
+Add("ore", 230, 11370, "Dark Iron Deposit", "Dunkeleisenvorkommen", "Dunkeleisenablagerung")
+Add("ore", 245, 10620, "Small Thorium Vein", "Kleines Thoriumvorkommen", "Kleine Thoriumader", "Ooze Covered Thorium Vein", "Schlammbedecktes Thoriumvorkommen", "Schlammbedeckte Thoriumader")
+Add("ore", 275, 10620, "Rich Thorium Vein", "Reiches Thoriumvorkommen", "Reiche Thoriumader", "Schlammbedecktes reiches Thoriumvorkommen", "Hakkari-Thoriumvorkommen", "Ooze Covered Rich Thorium Vein", "Schlammbedeckte reiche Thoriumader", "Hakkari Thorium Vein", "Hakkari-Thoriumader")
 Add("ore", 305, 22202, "Small Obsidian Chunk", "Kleiner Obsidianbrocken", "Large Obsidian Chunk", "Großer Obsidianbrocken", "Grosser Obsidianbrocken")
 
 -- A vein missing from the list is still known by its name.
@@ -413,8 +413,12 @@ local function Same(unit, guid)
 end
 
 --- The nameplate the game puts on the node in front of you.
+local seenPlate, seenUnit      -- the node's nameplate, from NAME_PLATE_UNIT_ADDED
+local plateLog = {}            -- last nameplates that came up, for /aio sparkle
+
 local function FindPlate()
     if not C_NamePlate then return nil end
+    if seenPlate and seenUnit and Same(seenUnit, UnitGUID("softinteract")) then return seenPlate end
     if C_NamePlate.GetNamePlateForUnit then
         local ok, plate = pcall(C_NamePlate.GetNamePlateForUnit, "softinteract")
         if ok and plate then return plate end
@@ -525,10 +529,22 @@ end
 M:On("PLAYER_SOFT_INTERACT_CHANGED", function() M:Update() end)
 
 M:On("NAME_PLATE_UNIT_ADDED", function(unit)
-    if current and (unit == "softinteract" or UnitIsUnit(unit, "softinteract")) then
-        tries = 0
-        Place()
+    local guid = UnitGUID("softinteract")
+    if not Readable(guid) then guid = nil end
+    local mine = unit == "softinteract" or Same(unit, guid)
+    local g = UnitGUID(unit)
+    table.insert(plateLog, 1, ("%s:%s%s"):format(tostring(unit),
+        Readable(g) and tostring(g):match("^%a+") or "?", mine and "*" or ""))
+    plateLog[6] = nil
+    if mine then
+        local ok, plate = pcall(C_NamePlate.GetNamePlateForUnit, unit)
+        if ok and plate then seenPlate, seenUnit = plate, unit end
+        if current then tries = 0; Place() end
     end
+end)
+
+M:On("NAME_PLATE_UNIT_REMOVED", function(unit)
+    if unit == seenUnit then seenPlate, seenUnit = nil, nil end
 end)
 
 M:On("PLAYER_REGEN_ENABLED", function()
@@ -587,4 +603,12 @@ function M:Slash()
         node and node.kind or "-", tostring(node and Skill(node.kind)), tostring(node and node.skill),
         tostring(FindPlate() ~= nil), tostring(glow and glow:IsShown() or false),
         tostring(GetCV("SoftTargetInteract")), tostring(GetCV(PLATE_CVAR))))
+    local n, nf = 0, 0
+    if C_NamePlate and C_NamePlate.GetNamePlates then
+        n = #(C_NamePlate.GetNamePlates() or {})
+        local ok, all = pcall(C_NamePlate.GetNamePlates, true)
+        nf = ok and all and #all or 0
+    end
+    self:Print(("Nameplates: %d (with forbidden %d). Last ones up: %s"):format(n, nf,
+        #plateLog > 0 and table.concat(plateLog, ", ") or "none"))
 end

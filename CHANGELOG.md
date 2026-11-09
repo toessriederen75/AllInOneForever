@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.30.2
+- Sparkles: German vein names as the game uses them (Kupfervorkommen, Zinnvorkommen …), so skill and icon are right. The node's nameplate is also taken when the game announces it, so the glow sits on the node more often. `/aio sparkle` also lists the nameplates that came up.
+
 ## 2.30.1
 - Sparkles: the glow now finds herbs and veins also when WoW Forever hands out no readable name (by the node's object ID) and finds the node's nameplate in more ways. Without a nameplate the glow with name and icon shows above your character. `/aio sparkle` now also tells what the module sees in front of you.
 
