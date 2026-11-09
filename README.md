@@ -13,8 +13,8 @@ One addon instead of a dozen, written to use as little memory and CPU as possibl
 - **Merchants & NPCs** – sell junk, repair, keep reagents and ammunition stocked, accept and turn in quests, skip gossip.
 - **Buffs** – a row of your missing own buffs (click to cast, hold Alt to move), consumables tracker.
 - **Interface** – info bar (gold, durability, bag space, clock …), tooltips with IDs and item level, chat improvements, minimap button collector.
-- **Map** – boat and zeppelin routes on the world map; a gathering map with every herb, vein and chest you found, on the world map and the minimap.
-- **Sparkles** – quest items glitter again; the herb or vein in front of you glows, with what it gives and the skill-up colour.
+- **Map** – boat and zeppelin routes on the world map.
+- **Quest items glitter** – the game's glitter on quest objects, which its outline setting hides, is shown again.
 - **Spell ranks** – finds spells on your bars that are not at their highest rank and replaces them with one click.
 - **Danger alarm** – a sound for fatigue, drowning and being attacked while away.
 - **Comfort** – mail helpers, error filter, fast loot and other small automations.
@@ -34,8 +34,7 @@ Written by Arthur. All code, pictures and sounds were made for this addon. Ideas
 - **Nova Spell Rank Checker** by Venomisto – the idea of checking spell ranks on the bars.
 - **Leatrix Plus** by Leatrix – ideas for larger Blizzard windows and small automations.
 - **Bagnon** by Jaliborc – the idea of one combined bag window.
-- **Forever AIO** by Jotahemeh – the idea of sparkling quest items, herbs and veins.
-- **GatherMate** – the idea of a gathering map.
+- **Forever AIO** by Jotahemeh – the idea of glittering quest items.
 - **Leatrix Maps** by Leatrix – the idea of travel points on the map, and the positions of the WoW Forever docks.
 
 ## License

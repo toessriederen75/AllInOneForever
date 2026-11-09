@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.32.0
+- Removed: the glow and notice for herbs and veins and the gathering map. The game only lets addons see a node about 10 yards away, which is too close to help. Game settings changed for them are put back, the saved places are deleted.
+- Kept: quest items glitter (Display → "Quest items glitter").
+
 ## 2.31.0
 - Sparkles: a notice with icon, name and skill colour shows in a fixed place on screen whenever a herb or vein is near (Alt + drag to move it), with a short sound (can be switched off). Herbs and veins are now found all around you, not only straight ahead ("Search all around"); reach up to 60 yards. The glow on the node itself stays, where the game gives it a nameplate.
 
