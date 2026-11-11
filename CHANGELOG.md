@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.33.0
+- Auto accept: escort quests are no longer accepted for you – the escort starts at once, and in a group everyone should be ready first. They are recognised by their objectives (Escort …, Eskortiert …, Begleitet … sicher …); a chat line says so, and you accept it yourself. Switch: Quests → "Leave escort quests to me".
+
 ## 2.32.0
 - Removed: the glow and notice for herbs and veins and the gathering map. The game only lets addons see a node about 10 yards away, which is too close to help. Game settings changed for them are put back, the saved places are deleted.
 - Kept: quest items glitter (Display → "Quest items glitter").
