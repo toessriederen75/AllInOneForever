@@ -386,7 +386,9 @@ function AIO:CountLines(itemID)
     for _, who in ipairs(names) do
         local row = item[who]
         local c = realm[who]
-        local label = c and self.ClassColored(who, c.class) or ("|cff40ff40" .. who .. "|r")
+        -- First name and surname (WoW Forever), where known from a login.
+        local shown = c and c.fullName or who
+        local label = c and self.ClassColored(shown, c.class) or ("|cff40ff40" .. shown .. "|r")
         for _, where in ipairs(WHERE) do
             local n = row[where]
             if where == "guild" and not self.settings.tooltipGuild then n = nil end

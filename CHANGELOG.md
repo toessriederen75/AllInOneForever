@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.35.0
+- Item tooltips: the item counts per character show first name and surname (once the character has logged in with this version or since the surname was noted).
+
 ## 2.34.0
 - Auto accept: a hotkey switches accepting and turning in quests on and off, with a line in the chat. Set it on the page of the module (click the button, press the key; Esc removes it) or in the game's Key Bindings under AddOns.
 
