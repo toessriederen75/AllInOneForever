@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.38.0
+- Bags: a hunter's quiver or ammo pouch (and other special bags such as soul bags) is no longer shown in the middle of the bags but as its own block underneath, like the reagent bag. "Free" counts only the bags that take any item.
+
 ## 2.37.0
 - New: Map details (Maps). On the continent map the zone under the mouse shows its level range, coloured like quests, and the fishing skill it needs. On zone maps, arrows mark the crossings into the next zone (click one to open that zone) and every flight master gets the taxi icon – only your own faction's if wanted. Level ranges and places as in Leatrix Maps by Leatrix.
 
