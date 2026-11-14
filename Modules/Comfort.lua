@@ -330,7 +330,8 @@ function Mail:StartOpenAll()
     self.running = true
     self.token = (self.token or 0) + 1
     self.gold, self.items = 0, 0
-    self.index = GetInboxNumItems() or 0
+    self.index = 1
+    self.seen = GetInboxNumItems() or 0
     self.tries = 0
     self:RefreshOpenAll()
     self:Step(self.token)
@@ -348,15 +349,21 @@ function Mail:StopOpenAll(reason)
 end
 
 --- One action per call: take the money or one attachment of the current
---- mail, or move on to the next. Mails are worked from the last to the first
---- so that a mail deleted after being emptied does not shift the rest.
+--- mail, or move on to the next. Mails are worked from the top (the newest)
+--- down. An emptied mail can vanish from the inbox a moment later and the
+--- mails below it move up: the place in the list moves up with them, so
+--- none is skipped.
 function Mail:Step(token)
     if token ~= self.token or not self.running then return end
     if not self.atMailbox or not self.enabled then self:StopOpenAll() return end
-    local i = self.index
     local count = GetInboxNumItems() or 0
-    if i > count then i = count; self.index = i end
-    if i < 1 then self:StopOpenAll() return end
+    if count < (self.seen or count) then
+        -- Mails above the current one were deleted after being emptied.
+        self.index = math.max(1, self.index - (self.seen - count))
+    end
+    self.seen = count
+    local i = self.index
+    if i < 1 or i > count then self:StopOpenAll() return end
 
     local _, _, _, _, money, cod, _, hasItem = GetInboxHeaderInfo(i)
     local acted = false
@@ -382,7 +389,7 @@ function Mail:Step(token)
         end
     end
     if not acted then
-        self.index = i - 1
+        self.index = i + 1
         self.tries = 0
     end
     After(acted and STEP_DELAY or 0.05, function() Mail:Step(token) end)

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.36.0
+- Mail: "Open all" now opens the mails from the top, the newest first, down to the oldest.
+
 ## 2.35.0
 - Item tooltips: the item counts per character show first name and surname (once the character has logged in with this version or since the surname was noted).
 
