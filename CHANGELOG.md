@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.37.0
+- New: Map details (Maps). On the continent map the zone under the mouse shows its level range, coloured like quests, and the fishing skill it needs. On zone maps, arrows mark the crossings into the next zone (click one to open that zone) and every flight master gets the taxi icon – only your own faction's if wanted. Level ranges and places as in Leatrix Maps by Leatrix.
+
 ## 2.36.0
 - Mail: "Open all" now opens the mails from the top, the newest first, down to the oldest.
 

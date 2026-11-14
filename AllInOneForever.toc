@@ -36,4 +36,6 @@ Modules\Chat.lua
 Modules\SpellRanks.lua
 Modules\Gtfo.lua
 Modules\Travel.lua
+Modules\MapData.lua
+Modules\MapInfo.lua
 Modules\Sparkle.lua
