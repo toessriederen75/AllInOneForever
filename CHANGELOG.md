@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.39.0
+- New (Quests): tell the group about finished quests. As soon as you have looted the last item a quest asks for (6/6), "Quest -> Completed" goes to the party chat – only while you are in a group. Kill and explore quests too if wanted; in a raid optionally the raid chat.
+
 ## 2.38.0
 - Bags: a hunter's quiver or ammo pouch (and other special bags such as soul bags) is no longer shown in the middle of the bags but as its own block underneath, like the reagent bag. "Free" counts only the bags that take any item.
 

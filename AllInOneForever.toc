@@ -25,6 +25,7 @@ Bags.lua
 
 Modules\Merchant.lua
 Modules\Quests.lua
+Modules\QuestDone.lua
 Modules\Buffs.lua
 Modules\Consumables.lua
 Modules\InfoBar.lua

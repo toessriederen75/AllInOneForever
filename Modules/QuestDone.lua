@@ -1,0 +1,136 @@
+-- AllInOne: tells your group when you have finished a quest. As soon as the
+-- last item of a quest is looted (6/6), "<quest> -> Completed" goes to the
+-- party chat, so nobody has to ask. Only in a group; kill and talk quests
+-- only if wanted.
+--
+-- How: the quest log is looked at after it changes (at most once a frame).
+-- A quest that was not complete before and is now gets announced once. What
+-- was already complete when you logged in or accepted it is not announced.
+
+local ADDON, ns = ...
+if ns.env then setfenv(1, ns.env) end
+local AIO, L = ns.AIO, ns.L
+
+if GetLocale() == "deDE" then
+    L["Tell the group about finished quests"] = "Gruppe über erledigte Quests informieren"
+    L["\"Quest -> Completed\" in the party chat when you have finished a quest."] =
+        "„Quest -> Abgeschlossen“ im Gruppenchat, wenn du eine Quest erledigt hast."
+    L["As soon as you have looted the last item a quest asks for (6/6), a line \"Quest -> Completed\" goes to the party chat. Only while you are in a group."] =
+        "Sobald du den letzten Gegenstand gelootet hast, den eine Quest verlangt (6/6), geht eine Zeile „Quest -> Abgeschlossen“ in den Gruppenchat. Nur, solange du in einer Gruppe bist."
+    L["Completed"]                 = "Abgeschlossen"
+    L["Also quests without items"] = "Auch Quests ohne Gegenstände"
+    L["Kill, explore and event quests too, not only those where you collect items."] =
+        "Auch Quests zum Töten, Erkunden und für Ereignisse, nicht nur die, bei denen du Gegenstände sammelst."
+    L["In a raid: raid chat"]      = "Im Schlachtzug: Schlachtzugchat"
+    L["Otherwise the message goes to your own party within the raid."] =
+        "Sonst geht die Nachricht an deine eigene Gruppe im Schlachtzug."
+end
+
+local M = AIO:NewModule("questdone", {
+    title    = L["Tell the group about finished quests"],
+    short    = L["\"Quest -> Completed\" in the party chat when you have finished a quest."],
+    desc     = L["As soon as you have looted the last item a quest asks for (6/6), a line \"Quest -> Completed\" goes to the party chat. Only while you are in a group."],
+    category = "quests",
+    default  = true,
+    defaults = { allTypes = false, raid = false },
+    options  = {
+        { type = "toggle", key = "allTypes", label = L["Also quests without items"], desc = L["Kill, explore and event quests too, not only those where you collect items."] },
+        { type = "toggle", key = "raid", label = L["In a raid: raid chat"], desc = L["Otherwise the message goes to your own party within the raid."] },
+    },
+})
+
+local CQ = C_QuestLog
+
+local function Call(fn, ...)
+    if type(fn) ~= "function" then return nil end
+    local ok, a, b, c, d, e, f, g, h = pcall(fn, ...)
+    if ok then return a, b, c, d, e, f, g, h end
+end
+
+-- Quests we know of: state[key] = true (complete) or false. title[key] and
+-- items[key] (asks for items) beside it. The key is the quest ID, or the
+-- title where a client gives none.
+local state, titles, items = {}, {}, {}
+local ready = false   -- the first look after login only notes, never announces
+
+--- Does the quest at log index i ask for items? Also returns whether it has
+--- any objective at all.
+local function Objectives(i, id)
+    local any, item = false, false
+    if id and CQ and CQ.GetQuestObjectives then
+        local list = Call(CQ.GetQuestObjectives, id)
+        if type(list) == "table" and #list > 0 then
+            for _, o in ipairs(list) do
+                any = true
+                if o.type == "item" then item = true end
+            end
+            return item, any
+        end
+    end
+    local n = Call(_G.GetNumQuestLeaderBoards, i) or 0
+    for j = 1, n do
+        local _, kind = Call(_G.GetQuestLogLeaderBoard, j, i)
+        any = true
+        if kind == "item" then item = true end
+    end
+    return item, any
+end
+
+local function Announce(key)
+    if not (IsInGroup and IsInGroup()) then return end
+    local channel = "PARTY"
+    if M.db.raid and IsInRaid and IsInRaid() then channel = "RAID" end
+    local text = ("%s -> %s"):format(titles[key] or "?", L["Completed"])
+    pcall(SendChatMessage, text, channel)
+end
+
+local seen = {}
+local function Scan()
+    wipe(seen)
+    local n = Call(_G.GetNumQuestLogEntries) or 0
+    for i = 1, n do
+        local title, _, _, isHeader, _, isComplete, _, id = Call(_G.GetQuestLogTitle, i)
+        if title and not isHeader then
+            local key = id and id > 0 and id or title
+            seen[key] = true
+            local done = isComplete == 1 or isComplete == true
+            local was = state[key]
+            if was == nil then
+                -- New in the log (or the first look): only noted.
+                titles[key] = title
+                items[key] = (Objectives(i, id))
+            elseif done and not was and ready then
+                local hasItems, any = Objectives(i, id)
+                items[key] = hasItems
+                if any and (hasItems or M.db.allTypes) then Announce(key) end
+            end
+            state[key] = done
+        end
+    end
+    -- Quests under a folded header do not show in the log: ask the game
+    -- about them by ID where it can; drop the ones that are gone.
+    for key, was in pairs(state) do
+        if not seen[key] then
+            local onQuest = type(key) == "number" and CQ and CQ.IsOnQuest and Call(CQ.IsOnQuest, key)
+            if onQuest then
+                local done = CQ.IsComplete and Call(CQ.IsComplete, key) and true or false
+                if done and not was and ready and (items[key] or M.db.allTypes) then Announce(key) end
+                state[key] = done
+            elseif onQuest == false or type(key) ~= "number" then
+                state[key], titles[key], items[key] = nil, nil, nil
+            end
+        end
+    end
+    ready = true
+end
+
+local function Later() AIO:Later("questdone", Scan) end
+
+function M:OnEnable()
+    wipe(state); wipe(titles); wipe(items)
+    ready = false
+    Scan()
+end
+
+M:On("QUEST_LOG_UPDATE", Later)
+M:On("PLAYER_ENTERING_WORLD", function() if not ready then Later() end end)
