@@ -1,7 +1,7 @@
 -- AllInOne: tells your group when you have finished a quest. As soon as the
 -- last item of a quest is looted (6/6), "<quest> -> Completed" goes to the
--- party chat, so nobody has to ask. Only in a group; kill and talk quests
--- only if wanted.
+-- party chat, so nobody has to ask; the same for kill and explore quests
+-- once the last objective is done. Only in a group.
 --
 -- How: the quest log is looked at after it changes (at most once a frame).
 -- A quest that was not complete before and is now gets announced once. What
@@ -15,12 +15,11 @@ if GetLocale() == "deDE" then
     L["Tell the group about finished quests"] = "Gruppe über erledigte Quests informieren"
     L["\"Quest -> Completed\" in the party chat when you have finished a quest."] =
         "„Quest -> Abgeschlossen“ im Gruppenchat, wenn du eine Quest erledigt hast."
-    L["As soon as you have looted the last item a quest asks for (6/6), a line \"Quest -> Completed\" goes to the party chat. Only while you are in a group."] =
-        "Sobald du den letzten Gegenstand gelootet hast, den eine Quest verlangt (6/6), geht eine Zeile „Quest -> Abgeschlossen“ in den Gruppenchat. Nur, solange du in einer Gruppe bist."
+    L["As soon as a quest is done – the last item looted (6/6) or the last enemy killed – a line \"Quest -> Completed\" goes to the party chat. Only while you are in a group."] =
+        "Sobald eine Quest erledigt ist – der letzte Gegenstand gelootet (6/6) oder der letzte Gegner getötet –, geht eine Zeile „Quest -> Abgeschlossen“ in den Gruppenchat. Nur, solange du in einer Gruppe bist."
     L["Completed"]                 = "Abgeschlossen"
-    L["Also quests without items"] = "Auch Quests ohne Gegenstände"
-    L["Kill, explore and event quests too, not only those where you collect items."] =
-        "Auch Quests zum Töten, Erkunden und für Ereignisse, nicht nur die, bei denen du Gegenstände sammelst."
+    L["Only quests with items"]    = "Nur Quests mit Gegenständen"
+    L["Leaves out kill, explore and event quests."] = "Lässt Quests zum Töten, Erkunden und für Ereignisse weg."
     L["In a raid: raid chat"]      = "Im Schlachtzug: Schlachtzugchat"
     L["Otherwise the message goes to your own party within the raid."] =
         "Sonst geht die Nachricht an deine eigene Gruppe im Schlachtzug."
@@ -29,12 +28,12 @@ end
 local M = AIO:NewModule("questdone", {
     title    = L["Tell the group about finished quests"],
     short    = L["\"Quest -> Completed\" in the party chat when you have finished a quest."],
-    desc     = L["As soon as you have looted the last item a quest asks for (6/6), a line \"Quest -> Completed\" goes to the party chat. Only while you are in a group."],
+    desc     = L["As soon as a quest is done – the last item looted (6/6) or the last enemy killed – a line \"Quest -> Completed\" goes to the party chat. Only while you are in a group."],
     category = "quests",
     default  = true,
-    defaults = { allTypes = false, raid = false },
+    defaults = { itemsOnly = false, raid = false },
     options  = {
-        { type = "toggle", key = "allTypes", label = L["Also quests without items"], desc = L["Kill, explore and event quests too, not only those where you collect items."] },
+        { type = "toggle", key = "itemsOnly", label = L["Only quests with items"], desc = L["Leaves out kill, explore and event quests."] },
         { type = "toggle", key = "raid", label = L["In a raid: raid chat"], desc = L["Otherwise the message goes to your own party within the raid."] },
     },
 })
@@ -102,7 +101,7 @@ local function Scan()
             elseif done and not was and ready then
                 local hasItems, any = Objectives(i, id)
                 items[key] = hasItems
-                if any and (hasItems or M.db.allTypes) then Announce(key) end
+                if any and (hasItems or not M.db.itemsOnly) then Announce(key) end
             end
             state[key] = done
         end
@@ -114,7 +113,7 @@ local function Scan()
             local onQuest = type(key) == "number" and CQ and CQ.IsOnQuest and Call(CQ.IsOnQuest, key)
             if onQuest then
                 local done = CQ.IsComplete and Call(CQ.IsComplete, key) and true or false
-                if done and not was and ready and (items[key] or M.db.allTypes) then Announce(key) end
+                if done and not was and ready and (items[key] or not M.db.itemsOnly) then Announce(key) end
                 state[key] = done
             elseif onQuest == false or type(key) ~= "number" then
                 state[key], titles[key], items[key] = nil, nil, nil

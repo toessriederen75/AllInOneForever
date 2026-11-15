@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.40.0
+- Finished quests in the party chat: kill and explore quests are now announced too, as soon as the last objective is done. "Only quests with items" leaves them out again.
+
 ## 2.39.0
 - New (Quests): tell the group about finished quests. As soon as you have looted the last item a quest asks for (6/6), "Quest -> Completed" goes to the party chat – only while you are in a group. Kill and explore quests too if wanted; in a raid optionally the raid chat.
 
