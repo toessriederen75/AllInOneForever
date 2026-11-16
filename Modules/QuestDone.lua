@@ -39,6 +39,9 @@ local M = AIO:NewModule("questdone", {
 })
 
 local CQ = C_QuestLog
+-- Note: the quest log functions are looked up through AllInOne's own
+-- environment (no _G.), where Compat.lua fills in what WoW Forever only has
+-- under C_QuestLog.
 
 local function Call(fn, ...)
     if type(fn) ~= "function" then return nil end
@@ -66,9 +69,13 @@ local function Objectives(i, id)
             return item, any
         end
     end
-    local n = Call(_G.GetNumQuestLeaderBoards, i) or 0
+    if type(GetNumQuestLeaderBoards) ~= "function" then
+        -- Nothing to tell the kinds apart: count it as a quest with goals.
+        return false, true
+    end
+    local n = Call(GetNumQuestLeaderBoards, i) or 0
     for j = 1, n do
-        local _, kind = Call(_G.GetQuestLogLeaderBoard, j, i)
+        local _, kind = Call(GetQuestLogLeaderBoard, j, i)
         any = true
         if kind == "item" then item = true end
     end
@@ -80,15 +87,21 @@ local function Announce(key)
     local channel = "PARTY"
     if M.db.raid and IsInRaid and IsInRaid() then channel = "RAID" end
     local text = ("%s -> %s"):format(titles[key] or "?", L["Completed"])
-    pcall(SendChatMessage, text, channel)
+    -- Newer clients (WoW Forever) send chat through C_ChatInfo.
+    local send = (C_ChatInfo and C_ChatInfo.SendChatMessage) or SendChatMessage
+    local ok, err = pcall(send, text, channel)
+    if not ok and not M.warned then
+        M.warned = true
+        M:Print("|cffff6060" .. tostring(err) .. "|r")
+    end
 end
 
 local seen = {}
 local function Scan()
     wipe(seen)
-    local n = Call(_G.GetNumQuestLogEntries) or 0
+    local n = Call(GetNumQuestLogEntries) or 0
     for i = 1, n do
-        local title, _, _, isHeader, _, isComplete, _, id = Call(_G.GetQuestLogTitle, i)
+        local title, _, _, isHeader, _, isComplete, _, id = Call(GetQuestLogTitle, i)
         if title and not isHeader then
             local key = id and id > 0 and id or title
             seen[key] = true

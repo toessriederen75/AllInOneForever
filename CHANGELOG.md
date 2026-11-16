@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.40.1
+- Finished quests in the party chat: fixed – nothing was announced in WoW Forever, because the quest log was read past AllInOne's stand-ins for the old quest functions, and chat now goes through C_ChatInfo where the game has it.
+
 ## 2.40.0
 - Finished quests in the party chat: kill and explore quests are now announced too, as soon as the last objective is done. "Only quests with items" leaves them out again.
 
