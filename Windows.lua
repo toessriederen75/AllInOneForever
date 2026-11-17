@@ -248,6 +248,51 @@ local function BuyBankSlot()
     elseif CB and CB.PurchaseBankTab then CB.PurchaseBankTab(CHAR_BANK) end
 end
 
+-- Buying a bank tab is reserved for Blizzard's own (secure) button. We lay
+-- that button, invisible, over ours while the bank is open, so the click
+-- reaches Blizzard's button and the game shows its own question with the
+-- price. Given back to Blizzard's bank window when the bank closes.
+local proxy, proxyHome
+
+local function BuyProxy()
+    if proxy ~= nil then return proxy or nil end
+    local panel = _G.BankPanel
+    local b = panel and panel.PurchasePrompt and panel.PurchasePrompt.TabCostFrame
+        and panel.PurchasePrompt.TabCostFrame.PurchaseButton
+    proxy = b or false
+    if b then
+        local p, rel, rp, x, y = b:GetPoint(1)
+        proxyHome = { parent = b:GetParent(), point = { p, rel, rp, x, y }, alpha = b:GetAlpha() }
+    end
+    return b
+end
+
+function AIO:AttachBuyProxy(button)
+    local b = BuyProxy()
+    if not b or InCombatLockdown() then return false end
+    if b:GetParent() ~= button then
+        b:SetParent(button)
+        b:ClearAllPoints()
+        b:SetAllPoints(button)
+        b:SetFrameLevel(button:GetFrameLevel() + 5)
+        b:SetAlpha(0)
+    end
+    if b.SetAttribute then pcall(b.SetAttribute, b, "overrideBankType", CHAR_BANK) end
+    b:Show()
+    return true
+end
+
+function AIO:ReleaseBuyProxy()
+    local b = proxy
+    if not b or not proxyHome or InCombatLockdown() then return end
+    if b:GetParent() == proxyHome.parent then return end
+    b:SetParent(proxyHome.parent)
+    b:ClearAllPoints()
+    local pt = proxyHome.point
+    if pt[1] then b:SetPoint(pt[1], pt[2], pt[3], pt[4], pt[5]) end
+    b:SetAlpha(proxyHome.alpha or 1)
+end
+
 --- Inventory slot of a bank bag (for putting a bag in or taking it out).
 local function BankBagInv(bag)
     if C_Container and C_Container.ContainerIDToInventoryID then
@@ -352,6 +397,7 @@ local bank = {
             StaticPopup_Show("ALLINONE_BUY_BANKSLOT", L["Buy a bank bag slot for %s?"]:format(AIO.Money(cost)))
         end)
         w.buy.tip = AIO.BANK_TABS and L["Opens Blizzard's bank window next to this one; buy the tab there. It goes away again by itself."] or nil
+        if AIO.BANK_TABS and BuyProxy() then w.buy.tip = nil end
         w.buy:Hide()
     end,
     Update = function(w)
@@ -371,6 +417,10 @@ local bank = {
             end
         end
         local buy = live and not full
+        -- Bank tabs: Blizzard's own buy button lies over ours.
+        if AIO.BANK_TABS then
+            if buy then AIO:AttachBuyProxy(w.buy) else AIO:ReleaseBuyProxy() end
+        end
         w.buy:ClearAllPoints()
         if anySlot then
             w.buy:SetPoint("LEFT", w.bagSlots[#w.bagSlots], "RIGHT", 8, 0)
@@ -382,6 +432,7 @@ local bank = {
     end,
     extraHeight = function(w) return w.extra or 0 end,
     OnHide = function(w)
+        if AIO.BANK_TABS then AIO:ReleaseBuyProxy() end
         if AIO.atBank and not AIO.closingBank then AIO:CloseBank() end
     end,
 }

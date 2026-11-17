@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.41.0
+- Bank window is back (switched on): opens by itself at a banker, with Forever's bank tabs. Away from a banker the bank button in the bag window shows the bank as last seen, also of your other characters.
+- Blizzard's bank window is no longer moved off screen but put into a frame scaled down to nothing: the bank stays open for the game, takes no room and no clicks, and comes back as normal when our window is switched off.
+- Buying a bank tab: Blizzard's own buy button lies invisibly over ours, so the game asks with its price and no action is blocked.
+- New: a small error log. Lua errors of the addon or of a bank window, and every "action blocked" message, are kept (last 25) in the saved variables, to find problems without copying error windows.
+
 ## 2.40.1
 - Finished quests in the party chat: fixed – nothing was announced in WoW Forever, because the quest log was read past AllInOne's stand-ins for the old quest functions, and chat now goes through C_ChatInfo where the game has it.
 

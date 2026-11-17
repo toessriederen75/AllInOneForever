@@ -655,14 +655,55 @@ local function Banish(frame)
     frame:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", -4000, -4000)
 end
 
+-- WoW Forever: Blizzard's window is not moved but put into a frame scaled
+-- down to nothing. It stays shown, so the game keeps the bank open, but it
+-- takes no room and no clicks, and nothing of Blizzard's layout has to be
+-- fought. Only while our window replaces it; otherwise it goes back.
+local park
+local function Parked()
+    if not park then
+        park = CreateFrame("Frame", nil, UIParent)
+        park:SetScale(0.001)
+        park:SetSize(1, 1)
+        park:SetPoint("BOTTOMLEFT")
+    end
+    return park
+end
+
+local function Wanted(frame)
+    if frame == _G.BankFrame then return AIO.settings.replaceBank and not ns.noBank end
+    return true
+end
+
+local function Park(frame)
+    if frame.aioOnScreen or not Wanted(frame) then
+        if frame:GetParent() == park then frame:SetParent(UIParent) end
+        return
+    end
+    if frame:GetParent() ~= Parked() then frame:SetParent(park) end
+end
+
+function AIO:Unpark(frame)
+    if frame and park and frame:GetParent() == park then frame:SetParent(UIParent) end
+end
+
 function AIO:Ghost(frame)
     if not frame or ghosts[frame] then return end
+    if ns.parkPanels then
+        ghosts[frame] = true
+        frame:HookScript("OnShow", Park)
+        -- Closed: back to its own place, so it opens normally if our window
+        -- is switched off later.
+        frame:HookScript("OnHide", function(f) AIO:Unpark(f) end)
+        if frame:IsShown() then Park(frame) end
+        return
+    end
     ghosts[frame] = true
     frame:HookScript("OnShow", Banish)
     if frame:IsShown() then Banish(frame) end
 end
 
-if _G.UpdateUIPanelPositions then
+if _G.UpdateUIPanelPositions and not ns.parkPanels then
     hooksecurefunc("UpdateUIPanelPositions", function()
         for frame in pairs(ghosts) do
             if frame:IsShown() then Banish(frame) end
@@ -690,6 +731,10 @@ end
 function AIO:BankClosed()
     if not self.atBank then return end
     self:BlizzardBank(false)
+    if ns.parkPanels then
+        self:ReleaseBuyProxy()
+        if _G.BankFrame and not _G.BankFrame:IsShown() then self:Unpark(_G.BankFrame) end
+    end
     self:ScanBank()
     self.atBank = false
     self.closingBank = true
@@ -707,6 +752,18 @@ function AIO:BlizzardBank(show)
     -- away here made it open off screen and invisible).
     if not f or ns.noBank or not self.settings.replaceBank then return end
     f.aioOnScreen = show and true or nil
+    if ns.parkPanels then
+        if show then
+            self:Unpark(f)
+            f:ClearAllPoints()
+            local w = self.windows.bank
+            if w and w:IsShown() then f:SetPoint("TOPLEFT", w, "TOPRIGHT", 8, 0)
+            else f:SetPoint("CENTER", UIParent, "CENTER") end
+        elseif f:IsShown() then
+            Park(f)
+        end
+        return
+    end
     if show then
         f:SetAlpha(1)
         f:EnableMouse(true)

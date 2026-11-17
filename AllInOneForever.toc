@@ -10,6 +10,7 @@
 ## IconTexture: Interface\AddOns\AllInOneForever\Media\logo
 
 Forever.lua
+Log.lua
 Compat.lua
 Locale.lua
 Core.lua
