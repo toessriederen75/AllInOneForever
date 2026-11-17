@@ -236,6 +236,9 @@ local function BankSlots()
     end
     if CB and CB.FetchNumPurchasedBankTabs then
         local num = CB.FetchNumPurchasedBankTabs(CHAR_BANK) or 0
+        -- WoW Forever: the first tab is the bank itself, the others are the
+        -- bank bag slots.
+        if AIO.BANK_MAIN then num = math.max(0, num - 1) end
         local nextTab = CB.FetchNextPurchasableBankTabData and CB.FetchNextPurchasableBankTabData(CHAR_BANK)
         local full = CB.HasMaxBankTabs and CB.HasMaxBankTabs(CHAR_BANK) or not nextTab
         return num, full, nextTab and nextTab.tabCost or 0
@@ -403,7 +406,7 @@ local bank = {
             b:Hide()
             w.bagSlots[i] = b
         end
-        local tabs = AIO.BANK_TABS and not OLD_SLOTS
+        local tabs = AIO.BANK_TABS and not OLD_SLOTS and not AIO.BANK_MAIN
         w.buy = AIO.Style.Button(w, tabs and L["Buy bank tab"] or L["Buy bank slot"], 130, 22)
         -- What is left to buy and what the next one costs.
         w.buyInfo = AIO.Style.Text(w, 11)
