@@ -32,11 +32,19 @@ AIO.FIRST_BANKBAG  = (BI and BI.BankBag_1)
 AIO.REAGENT_FAMILY = -1   -- our own "family" for it: never mixed with other items
 -- WoW Forever: bank tabs (CharacterBankTab_1..n) instead of bank bag slots.
 AIO.BANK_TABS = BI and BI.CharacterBankTab_1 ~= nil or false
+-- In WoW Forever the first of them is the bank itself (48 slots) and the
+-- others are the bank bag slots (bought one by one, a bag goes in each).
+-- The old bank container (-1) still answers there, with slots no one can
+-- use: it is left out, else the bank shows 32 slots too many.
 if AIO.BANK_TABS then
     local n = 0
     while BI["CharacterBankTab_" .. (n + 1)] do n = n + 1 end
-    AIO.NUM_BANKBAGS = n
+    AIO.BANK_MAIN     = BI.CharacterBankTab_1
+    AIO.FIRST_BANKBAG = BI.CharacterBankTab_2 or (BI.CharacterBankTab_1 + 1)
+    AIO.NUM_BANKBAGS  = math.max(0, n - 1)
 end
+-- The container that is the bank itself.
+AIO.BANK_BAG = AIO.BANK_MAIN or AIO.BANK
 AIO.GUILD_SLOTS  = _G.MAX_GUILDBANK_SLOTS_PER_TAB or 98
 AIO.SIZE         = 37   -- item button size
 AIO.GAP          = 4    -- space between buttons (the setting slotGap wins)
@@ -60,13 +68,13 @@ function AIO:InventoryBags()
 end
 
 function AIO:BankBags()
-    local list = { self.BANK }
+    local list = { self.BANK_BAG }
     for bag = self.FIRST_BANKBAG, self.FIRST_BANKBAG + self.NUM_BANKBAGS - 1 do list[#list + 1] = bag end
     return list
 end
 
 function AIO:IsBankBag(bag)
-    return bag == self.BANK or (bag >= self.FIRST_BANKBAG and bag < self.FIRST_BANKBAG + self.NUM_BANKBAGS)
+    return bag == self.BANK_BAG or bag == self.BANK or (bag >= self.FIRST_BANKBAG and bag < self.FIRST_BANKBAG + self.NUM_BANKBAGS)
 end
 
 function AIO:IsInventoryBag(bag)
@@ -937,7 +945,7 @@ AIO:On("BAG_UPDATE_DELAYED", function()
     AIO:UpdateAll()
 end)
 AIO:On("PLAYERBANKSLOTS_CHANGED", function()
-    if AIO.atBank then AIO:SaveBag(AIO.BANK) end
+    if AIO.atBank then AIO:SaveBag(AIO.BANK_BAG) end
     AIO:UpdateAll()
 end)
 AIO:On("PLAYERBANKBAGSLOTS_CHANGED", function()

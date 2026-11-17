@@ -254,11 +254,19 @@ end
 -- price. Given back to Blizzard's bank window when the bank closes.
 local proxy, proxyHome
 
+-- Bank bag slots bought the old way (WoW Forever too, under its bank tabs).
+local OLD_SLOTS = GetNumBankSlots ~= nil
+
 local function BuyProxy()
     if proxy ~= nil then return proxy or nil end
-    local panel = _G.BankPanel
-    local b = panel and panel.PurchasePrompt and panel.PurchasePrompt.TabCostFrame
-        and panel.PurchasePrompt.TabCostFrame.PurchaseButton
+    local b
+    if OLD_SLOTS then
+        b = _G.BankFramePurchaseButton
+    else
+        local panel = _G.BankPanel
+        b = panel and panel.PurchasePrompt and panel.PurchasePrompt.TabCostFrame
+            and panel.PurchasePrompt.TabCostFrame.PurchaseButton
+    end
     proxy = b or false
     if b then
         local p, rel, rp, x, y = b:GetPoint(1)
@@ -277,7 +285,12 @@ function AIO:AttachBuyProxy(button)
         b:SetFrameLevel(button:GetFrameLevel() + 5)
         b:SetAlpha(0)
     end
-    if b.SetAttribute then pcall(b.SetAttribute, b, "overrideBankType", CHAR_BANK) end
+    if b.SetAttribute and not OLD_SLOTS then pcall(b.SetAttribute, b, "overrideBankType", CHAR_BANK) end
+    -- Blizzard's question shows the price it finds on its bank window.
+    if OLD_SLOTS and _G.BankFrame then
+        local _, _, cost = BankSlots()
+        _G.BankFrame.nextSlotCost = cost
+    end
     b:Show()
     return true
 end
@@ -301,6 +314,11 @@ local function BankBagInv(bag)
     end
     if ContainerIDToInventoryID then
         local ok, inv = pcall(ContainerIDToInventoryID, bag)
+        if ok and inv then return inv end
+    end
+    -- Old clients: the bank bag's number in the row of bank bag slots.
+    if BankButtonIDToInvSlotID then
+        local ok, inv = pcall(BankButtonIDToInvSlotID, bag - AIO.FIRST_BANKBAG + 1, 1)
         if ok and inv then return inv end
     end
     return nil
@@ -332,7 +350,7 @@ local bank = {
     EmptyNote = function(w)
         if BankLive(w) then return nil end
         local c = AIO:CharData(OwnerName(w))
-        local has = c and c.bags and c.bags[AIO.BANK]
+        local has = c and c.bags and c.bags[AIO.BANK_BAG]
         if not has then return L["No bank data yet. Visit a banker once with this character."] end
     end,
     Footer = function(w)
@@ -385,9 +403,13 @@ local bank = {
             b:Hide()
             w.bagSlots[i] = b
         end
-        w.buy = AIO.Style.Button(w, AIO.BANK_TABS and L["Buy bank tab"] or L["Buy bank slot"], 130, 22)
+        local tabs = AIO.BANK_TABS and not OLD_SLOTS
+        w.buy = AIO.Style.Button(w, tabs and L["Buy bank tab"] or L["Buy bank slot"], 130, 22)
+        -- What is left to buy and what the next one costs.
+        w.buyInfo = AIO.Style.Text(w, 11)
+        w.buyInfo:SetPoint("LEFT", w.buy, "RIGHT", 8, 0)
         w.buy:SetScript("OnClick", function()
-            if AIO.BANK_TABS then
+            if tabs then
                 -- Only Blizzard's own button may buy a tab: show its window.
                 local f = _G.BankFrame
                 AIO:BlizzardBank(not (f and f.aioOnScreen))
@@ -396,8 +418,8 @@ local bank = {
             local _, _, cost = BankSlots()
             StaticPopup_Show("ALLINONE_BUY_BANKSLOT", L["Buy a bank bag slot for %s?"]:format(AIO.Money(cost)))
         end)
-        w.buy.tip = AIO.BANK_TABS and L["Opens Blizzard's bank window next to this one; buy the tab there. It goes away again by itself."] or nil
-        if AIO.BANK_TABS and BuyProxy() then w.buy.tip = nil end
+        w.buy.tip = tabs and L["Opens Blizzard's bank window next to this one; buy the tab there. It goes away again by itself."] or nil
+        if BuyProxy() then w.buy.tip = nil end
         w.buy:Hide()
     end,
     Update = function(w)
@@ -405,7 +427,7 @@ local bank = {
         local num, full = BankSlots()
         local anySlot = false
         for i, b in ipairs(w.bagSlots) do
-            local inv = live and not AIO.BANK_TABS and BankBagInv(b.bag)
+            local inv = live and BankBagInv(b.bag)
             if inv then
                 anySlot = true
                 b.locked = i > num
@@ -417,18 +439,24 @@ local bank = {
             end
         end
         local buy = live and not full
-        -- Bank tabs: Blizzard's own buy button lies over ours.
-        if AIO.BANK_TABS then
-            if buy then AIO:AttachBuyProxy(w.buy) else AIO:ReleaseBuyProxy() end
-        end
+        -- Blizzard's own buy button lies over ours, so the game asks.
+        if buy then AIO:AttachBuyProxy(w.buy) else AIO:ReleaseBuyProxy() end
         w.buy:ClearAllPoints()
-        if anySlot then
-            w.buy:SetPoint("LEFT", w.bagSlots[#w.bagSlots], "RIGHT", 8, 0)
-        else
-            w.buy:SetPoint("BOTTOMLEFT", 12, 40)
-        end
+        w.buy:SetPoint("BOTTOMLEFT", 12, 40)
         w.buy:SetShown(buy)
-        w.extra = (anySlot or buy) and 32 or 0
+        if buy then
+            local _, _, cost = BankSlots()
+            local left = math.max(0, #w.bagSlots - num)
+            w.buyInfo:SetText(L["%d more to buy · next one %s"]:format(left, AIO.Money(cost)))
+        end
+        w.buyInfo:SetShown(buy)
+        -- Bag slots in their own row, the buy button below them.
+        local rows = (anySlot and 1 or 0) + (buy and 1 or 0)
+        for _, b in ipairs(w.bagSlots) do
+            b:ClearAllPoints()
+            b:SetPoint("BOTTOMLEFT", 12 + (b.index - 1) * 29, buy and 70 or 38)
+        end
+        w.extra = rows * 32
     end,
     extraHeight = function(w) return w.extra or 0 end,
     OnHide = function(w)

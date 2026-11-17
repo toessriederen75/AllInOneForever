@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.42.0
+- Bank: shows the real 48 slots again. WoW Forever keeps its bank in the first bank tab; the old bank container still answers with 32 slots nobody can use and is now left out (it made 80).
+- Bank: the row of bank bag slots is back – drop a bag in, click to take it out, slots not bought yet are red. Below it "Buy bank slot" with how many are left and what the next one costs; the click goes to Blizzard's own buy button, so the game asks with the price.
+
 ## 2.41.0
 - Bank window is back (switched on): opens by itself at a banker, with Forever's bank tabs. Away from a banker the bank button in the bag window shows the bank as last seen, also of your other characters.
 - Blizzard's bank window is no longer moved off screen but put into a frame scaled down to nothing: the bank stays open for the game, takes no room and no clicks, and comes back as normal when our window is switched off.
