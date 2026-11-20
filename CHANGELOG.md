@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.43.0
+- Map details: dungeon and raid entrances on zone maps (35 places, Forever's new dungeons included), with the instance's level range in the tooltip; Blackrock Mountain and Ahn'Qiraj list the instances inside. Switchable ("Instance entrances").
+- Zone crossings and flight masters updated to Leatrix Maps 1.60.35 (124 crossings now).
+
 ## 2.42.1
 - Bank: the first bank bag slot not bought yet is red too (the bank itself was counted as a bought slot), and "how many are left" is right. The button says "Buy bank slot".
 

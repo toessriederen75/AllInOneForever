@@ -2,7 +2,8 @@
 -- shows its level range next to the name (coloured like quests: red too
 -- high, green easy, grey trivial) and, if wanted, the fishing skill it needs.
 -- On zone maps an arrow marks every crossing into the next zone (click it to
--- open that zone's map) and every flight master gets the game's taxi icon.
+-- open that zone's map), dungeon and raid entrances get their icon with the
+-- level range, and every flight master gets the game's taxi icon.
 --
 -- Level ranges and places as in Leatrix Maps by Leatrix (WoW Forever), who
 -- gathered them first; see MapData.lua. The code here is our own.
@@ -33,6 +34,11 @@ if GetLocale() == "deDE" then
     L["Icon size"]              = "Grösse der Symbole"
     L["Click: show this map"]   = "Klick: diese Karte zeigen"
     L["Flight master"]          = "Greifenmeister"
+    L["Instance entrances"]     = "Instanz-Eingänge"
+    L["Dungeons and raids on zone maps, with their level range."] = "Dungeons und Schlachtzüge auf Zonenkarten, mit ihrem Stufenbereich."
+    L["Dungeon"]                = "Dungeon"
+    L["Raid"]                   = "Schlachtzug"
+    L["Level %s"]               = "Stufe %s"
 end
 
 local M = AIO:NewModule("mapinfo", {
@@ -41,12 +47,13 @@ local M = AIO:NewModule("mapinfo", {
     desc     = L["Pointing at a zone on the continent map shows its level range, coloured like quests. On zone maps, arrows mark the crossings into the next zone (click one to open that zone) and flight masters get the taxi icon."],
     category = "maps",
     default  = true,
-    defaults = { levels = true, fishing = true, arrows = true, flights = true, ownFaction = true, size = 20 },
+    defaults = { levels = true, fishing = true, arrows = true, flights = true, ownFaction = true, instances = true, size = 20 },
     options  = {
         { type = "toggle", key = "levels", label = L["Level ranges of zones"], desc = L["On the continent map, next to the zone name under the mouse."] },
         { type = "toggle", key = "fishing", label = L["Fishing skill"], desc = L["The fishing skill a zone needs, below its name."],
           disabled = function(m) return not m.db.levels end },
         { type = "toggle", key = "arrows", label = L["Zone crossings"], desc = L["Arrows on zone maps where a path leads into the next zone."] },
+        { type = "toggle", key = "instances", label = L["Instance entrances"], desc = L["Dungeons and raids on zone maps, with their level range."] },
         { type = "toggle", key = "flights", label = L["Flight masters"], half = true },
         { type = "toggle", key = "ownFaction", label = L["Only my faction's flight masters"], desc = L["Neutral ones are always shown."], half = true,
           disabled = function(m) return not m.db.flights end },
@@ -185,6 +192,8 @@ local TAXI = {
     A = Atlas("TaxiNode_Alliance"), H = Atlas("TaxiNode_Horde"), N = Atlas("TaxiNode_Neutral"),
 }
 local TAXI_FILE = "Interface\\TaxiFrame\\UI-Taxi-Icon-Green"
+local INSTANCE = { D = Atlas("Dungeon"), R = Atlas("Raid"), B = Atlas("Dungeon") }
+local INSTANCE_FILE = "Interface\\Minimap\\Dungeon"
 local FACTION_COLOR = { A = { 0.35, 0.62, 1 }, H = { 1, 0.35, 0.3 }, N = { 1, 0.82, 0.35 } }
 local FACTION_NAME = { A = _G.FACTION_ALLIANCE or "Alliance", H = _G.FACTION_HORDE or "Horde", N = _G.FACTION_NEUTRAL or "Neutral" }
 
@@ -198,7 +207,16 @@ end
 
 local function OnEnter(p)
     GameTooltip:SetOwner(p, "ANCHOR_RIGHT")
-    if p.kind == "arrow" then
+    if p.kind == "instance" then
+        GameTooltip:AddLine(L[p.name], 1, 0.82, 0)
+        if p.note and p.note ~= "Dungeon" and p.note ~= "Raid" then
+            GameTooltip:AddLine(L[p.note], 0.8, 0.8, 0.8, true)
+        else
+            GameTooltip:AddLine(p.instKind == "R" and L["Raid"] or L["Dungeon"], 0.8, 0.8, 0.8)
+        end
+        local r = Range({ p.lo, p.hi })
+        if r then GameTooltip:AddLine(L["Level %s"]:format((r:gsub("[()]", ""))), 1, 1, 1) end
+    elseif p.kind == "arrow" then
         GameTooltip:AddLine(L[p.name], 1, 0.82, 0)
         if p.note then GameTooltip:AddLine(L[p.note], 0.8, 0.8, 0.8, true) end
         GameTooltip:AddLine(L["Click: show this map"], 0.5, 0.8, 1)
@@ -243,7 +261,7 @@ local function Rescale()
     local size = M.db.size / Scale()
     for _, p in ipairs(pins) do
         if p:IsShown() then
-            local s = p.kind == "arrow" and size * 1.15 or size
+            local s = (p.kind == "arrow" or p.kind == "instance") and size * 1.15 or size
             p:SetSize(s, s)
         end
     end
@@ -274,6 +292,20 @@ function M:Refresh()
                 p:EnableMouse(true)
                 p:ClearAllPoints()
                 p:SetPoint("CENTER", layer, "TOPLEFT", a[1] / 100 * w, -a[2] / 100 * h)
+                p:Show()
+            end
+        end
+        if db.instances and ns.mapInstances and ns.mapInstances[mapID] then
+            for _, e in ipairs(ns.mapInstances[mapID]) do
+                n = n + 1
+                local p = Pin(n)
+                p.kind, p.instKind, p.name, p.note, p.lo, p.hi, p.dest = "instance", e[1], e[4], e[5], e[6], e[7], nil
+                if INSTANCE[e[1]] then p.tex:SetAtlas(INSTANCE[e[1]]) else p.tex:SetTexture(INSTANCE_FILE) end
+                p.tex:SetRotation(0)
+                p.tex:SetVertexColor(1, 1, 1)
+                p:EnableMouse(true)
+                p:ClearAllPoints()
+                p:SetPoint("CENTER", layer, "TOPLEFT", e[2] / 100 * w, -e[3] / 100 * h)
                 p:Show()
             end
         end

@@ -1,8 +1,9 @@
--- AllInOneForever: zone crossings and flight masters for the world map.
--- Places taken from Leatrix Maps by Leatrix (WoW Forever), who mapped them
+-- AllInOneForever: zone crossings, flight masters and instance entrances for the world map.
+-- Places taken from Leatrix Maps 1.60.35 by Leatrix (WoW Forever), who mapped them
 -- first; the code that shows them is our own (Modules/MapInfo.lua).
 --   ns.mapArrows[zone]  = { { x, y, destination map, rotation, name, note }, ... }
 --   ns.mapFlights[zone] = { { faction (A/H/N), x, y, name }, ... }
+--   ns.mapInstances[zone] = { { kind (D dungeon, R raid, B both), x, y, name, note, lowest, highest level }, ... }
 -- Positions in percent of the zone map, as the game's coordinates show them.
 
 local ADDON, ns = ...
@@ -10,11 +11,16 @@ local L = ns.L
 
 if GetLocale() == "deDE" then
     L["Aerie Peak, The Hinterlands"] = "Aerie Peak, Hinterland"
+    L["Alcaz Prison"] = "Gefängnis von Alcaz"
     L["Alterac Mountains"] = "Alteracgebirge"
     L["Arathi Highlands"] = "Arathihochland"
     L["Auberdine, Darkshore"] = "Auberdine, Dunkelküste"
     L["Badlands"] = "Ödland"
+    L["Blackfathom Deeps"] = "Blackfathom-Tiefe"
+    L["Blackmaw Hold"] = "Die Schwarzschlundfeste"
+    L["Blackrock Depths, Lower Blackrock Spire, Upper Blackrock Spire, |nMolten Core, Blackwing Lair"] = "Schwarzfelstiefen, Untere Schwarzfelsspitze, Obere Schwarzfelsspitze, |nGeschmolzener Kern, Pechschwingenhort"
     L["Blackrock Mountain"] = "Der Blackrock"
+    L["Blackrock Pass"] = "Blackrockpass"
     L["Blasted Lands"] = "Verwüstete Lande"
     L["Bloodvenom Post, Felwood"] = "Blutgiftposten, Teufelswald"
     L["Booty Bay, Stranglethorn"] = "Booty Bay, Schlingendorntal"
@@ -23,14 +29,22 @@ if GetLocale() == "deDE" then
     L["Camp Taurajo, The Barrens"] = "Camp Taurajo, Das Brachland"
     L["Cenarion Hold, Silithus"] = "Burg Cenarius, Silithus"
     L["Chillwind Camp, Western Plaguelands"] = "Chillwind-Lager, Westliche Pestländer"
+    L["City of Dalaran"] = "Dalaran"
     L["Crossroads, The Barrens"] = "Crossroads, Das Brachland"
+    L["Darkshire"] = "Dunkelhain"
     L["Darkshire, Duskwood"] = "Dunkelhain, Dämmerwald"
     L["Darkshore"] = "Dunkelküste"
     L["Deadwind Pass"] = "Gebirgspass der Totenwinde"
+    L["Dire Maul (East)"] = "Düsterbruch (Ost)"
+    L["Dire Maul (North)"] = "Düsterbruch (Nord)"
+    L["Dire Maul (West)"] = "Düsterbruch (West)"
+    L["Dungeon"] = "Instanz"
     L["Duskwood"] = "Dämmerwald"
     L["Dustwallow Marsh"] = "Düstermarschen"
     L["Eastern Plaguelands"] = "Östliche Pestländer"
+    L["Eastvale Logging Camp"] = "Holzfällerlager des Osttals"
     L["Elwynn Forest"] = "Wald von Elwynn"
+    L["Excavation Site: Wetlands"] = "Ausgrabungsstätte: Sumpfland"
     L["Faldir's Cove"] = "Die Faldirbucht"
     L["Farholde Keep, Riverglades"] = "Burg Farholde, Flusslande"
     L["Felwood"] = "Teufelswald"
@@ -43,6 +57,7 @@ if GetLocale() == "deDE" then
     L["Hillsbrad Foothills"] = "Vorgebirge von Hillsbrad"
     L["Just follow the path west"] = "Folge dem Weg nach Westen"
     L["Kargath, Badlands"] = "Kargath, Ödland"
+    L["Krol'dok Stronghold"] = "Feste Krol'dok"
     L["Lakeshire, Redridge"] = "Seenhain, Rotkammgebirge"
     L["Light's Hope Chapel, Eastern Plaguelands"] = "Kapelle des hoffnungsvollen Lichts, Östliche Pestländer"
     L["Marshal's Refuge, Un'Goro Crater"] = "Marshals Zuflucht, Un'Goro-Krater"
@@ -53,18 +68,29 @@ if GetLocale() == "deDE" then
     L["Nijel's Point, Desolace"] = "Die Nijelspitze, Desolace"
     L["North"] = "Norden"
     L["North Gate Pass"] = "Nordtorpass"
+    L["North of Twilight's Shroud"] = "Nördlich von Zwielichtschleier"
+    L["Onyxia's Lair"] = "Onyxias Hort"
+    L["Ragefire Chasm"] = "Ragefireabgrund"
+    L["Raid"] = "Schlachtzug"
     L["Ratchet, The Barrens"] = "Ratchet, Das Brachland"
     L["Ravenholdt Manor"] = "Ravenholdt-Anwesen"
+    L["Razorfen Downs"] = "Die Hügel von Razorfen"
+    L["Razorfen Kraul"] = "Der Kral von Razorfen"
     L["Redridge Mountains"] = "Rotkammgebirge"
     L["Refuge Pointe, Arathi"] = "Die Zuflucht, Arathi"
     L["Requires Key to Searing Gorge"] = "Benötigt Schlüssel für Brennende Schlucht"
     L["Revantusk Village, The Hinterlands"] = "Revantusk, Hinterland"
+    L["Riverglades"] = "Flusslande"
     L["Rog'mar, Riverglades"] = "Rog'mar, Flusslande"
+    L["Ruins of Ahn'Qiraj, Temple of Ahn'Qiraj"] = "Ruinen von Ahn'Qiraj, Tempel von Ahn'Qiraj"
     L["Rut'theran Village"] = "Rut'theran"
     L["Rut'theran Village, Teldrassil"] = "Rut'theran, Teldrassil"
+    L["Scarlet Monastery"] = "Das Scharlachrote Kloster"
     L["Searing Gorge"] = "Sengende Schlucht"
     L["Sentinel Hill, Westfall"] = "Späherkuppe, Westfall"
+    L["Shadowfang Keep"] = "Burg Schattenfang"
     L["Shadowprey Village, Desolace"] = "Shadowprey, Desolace"
+    L["Shaper's Terrace"] = "Terrasse des Formers"
     L["Silverpine Forest"] = "Silberwald"
     L["South"] = "Süden"
     L["South Gate Pass"] = "Südtorpass"
@@ -74,6 +100,8 @@ if GetLocale() == "deDE" then
     L["Stonetalon Peak, Stonetalon Mountains"] = "Der Steinkrallengipfel, Steinkrallengebirge"
     L["Stormwind City"] = "Sturmwind"
     L["Stranglethorn Vale"] = "Schlingendorntal"
+    L["Stratholme (Main Gate)"] = "Stratholme (Haupttor)"
+    L["Stratholme (Service Gate)"] = "Stratholme (Dienstbotentor)"
     L["Summit of Eternity, Mount Hyjal"] = "Gipfel der Ewigkeit, Hyjal"
     L["Sun Rock Retreat"] = "Sonnenfels"
     L["Sun Rock Retreat, Stonetalon Mountains"] = "Sonnenfels, Steinkrallengebirge"
@@ -82,13 +110,19 @@ if GetLocale() == "deDE" then
     L["Talonbranch Glade, Felwood"] = "Nachtlaublichtung, Teufelswald"
     L["Talrendis Point, Azshara"] = "Talrendisspitze, Azshara"
     L["Tarren Mill, Hillsbrad"] = "Tarrens Mühle, Hillsbrad"
+    L["Temple of Atal'Hakkar"] = "Tempel von Atal'Hakkar"
     L["Thandol Span"] = "Thandolübergang"
     L["The Barrens"] = "Das Brachland"
     L["The Bulwark"] = "Das Bollwerk"
+    L["The Deadmines"] = "Die Todesminen"
+    L["The Drowned City"] = "Die Versunkene Stadt"
     L["The Great Lift"] = "Der Große Aufzug"
+    L["The Hall of Thanes"] = "Die Halle der Thanen"
     L["The Hinterlands"] = "Hinterland"
     L["The Overlook Cliffs"] = "Die Aussichtsklippen"
+    L["The Ruins of Lordaeron"] = "Die Ruinen von Lordaeron"
     L["The Sepulcher, Silverpine Forest"] = "Das Grabmal, Silberwald"
+    L["The Stockade"] = "Das Verlies"
     L["The Talondeep Path"] = "Der Steinkrallenpfad"
     L["The Zoram Strand"] = "Der Zoramstrand"
     L["Theramore, Dustwallow Marsh"] = "Theramore, Düstermarschen"
@@ -97,7 +131,9 @@ if GetLocale() == "deDE" then
     L["Timbermaw Hold"] = "Holzschlundfeste"
     L["Tirisfal Glades"] = "Tirisfal"
     L["Twilight Shore"] = "Zwielichtufer"
+    L["Twilight's Shroud"] = "Zwielichtschleier"
     L["Un'Goro Crater"] = "Un'Goro-Krater"
+    L["Wailing Caverns"] = "Die Höhlen des Wehklagens"
     L["Western Plaguelands"] = "Westliche Pestländer"
     L["Wetlands"] = "Sumpfland"
     L["You will die!"] = "Du wirst sterben!"
@@ -137,6 +173,7 @@ ns.mapArrows = {
     [1418] = {
         { 51.1, 14.8, 1432, 0.8, "Loch Modan" },
         { 5.3, 61.1, 1427, 1.5, "Searing Gorge" },
+        { 54.8, 92.5, 2548, 3.1, "Riverglades", "Twilight's Shroud" },
     },
     [1419] = {
         { 52.2, 10.7, 1435, 0, "Swamp of Sorrows" },
@@ -208,6 +245,14 @@ ns.mapArrows = {
         { 46.8, 76.9, 1418, 3.2, "Badlands" },
         { 21.5, 66.2, 1426, 0.5, "Dun Morogh", "South Gate Pass" },
         { 25.4, 10.9, 1437, 0.1, "Wetlands", "Dun Algaz" },
+    },
+    [1433] = {
+        { 2.2, 90.6, 1431, 2.4, "Duskwood", "Darkshire" },
+        { 3, 72.3, 1429, 1.65, "Elwynn Forest", "Eastvale Logging Camp" },
+        { 41.7, 7.1, 1428, 0, "Burning Steppes", "Blackrock Pass" },
+        { 44.8, 9.8, 2548, 5.5, "Riverglades", "Blackrock Pass" },
+        { 66.4, 18.6, 2548, 0.3, "Riverglades", "Redridge Pass" },
+        { 96.5, 70.1, 1435, 2.7, "Swamp of Sorrows", "Redridge Pass" },
     },
     [1434] = {
         { 39.2, 6.5, 1431, 0, "Duskwood" },
@@ -308,6 +353,103 @@ ns.mapArrows = {
     },
     [1458] = {
         { 66.2, 5.2, 1420, 0, "Tirisfal Glades" },
+    },
+    [2548] = {
+        { 32, 30.2, 1418, 0, "Badlands", "North of Twilight's Shroud" },
+        { 16.3, 69, 1433, 1.8, "Redridge Mountains", "Blackrock Pass" },
+        { 25.3, 72.8, 1433, 3.2, "Redridge Mountains", "Redridge Pass" },
+    },
+}
+
+ns.mapInstances = {
+    [1413] = {
+        { "D", 46, 36.4, "Wailing Caverns", "Dungeon", 17, 24 },
+        { "D", 42.9, 90.2, "Razorfen Kraul", "Dungeon", 29, 38 },
+        { "D", 49, 93.9, "Razorfen Downs", "Dungeon", 37, 46 },
+    },
+    [1416] = {
+        { "D", 8.5, 59.3, "City of Dalaran", "Dungeon", 28, 33 },
+    },
+    [1418] = {
+        { "D", 44.6, 12.1, "Uldaman", "Dungeon", 41, 51 },
+    },
+    [1420] = {
+        { "D", 82.6, 33.8, "Scarlet Monastery", "Dungeon", 34, 45 },
+    },
+    [1421] = {
+        { "D", 44.8, 67.8, "Shadowfang Keep", "Dungeon", 22, 30 },
+    },
+    [1422] = {
+        { "D", 69.7, 73.2, "Scholomance", "Dungeon", 58, 60 },
+    },
+    [1423] = {
+        { "D", 27.8, 11.6, "Stratholme (Main Gate)", "Dungeon", 58, 60 },
+        { "D", 43.6, 19.5, "Stratholme (Service Gate)", "Dungeon", 58, 60 },
+        { "R", 33.7, 20.7, "Naxxramas", "Raid", 60, 60 },
+    },
+    [1426] = {
+        { "D", 24.3, 39.8, "Gnomeregan", "Dungeon", 29, 38 },
+    },
+    [1427] = {
+        { "B", 34.8, 85.3, "Blackrock Mountain", "Blackrock Depths, Lower Blackrock Spire, Upper Blackrock Spire, |nMolten Core, Blackwing Lair", 52, 60 },
+    },
+    [1428] = {
+        { "B", 29.4, 38.3, "Blackrock Mountain", "Blackrock Depths, Lower Blackrock Spire, Upper Blackrock Spire, |nMolten Core, Blackwing Lair", 52, 60 },
+    },
+    [1434] = {
+        { "R", 53.9, 17.6, "Zul'Gurub", "Raid", 60, 60 },
+        { "D", 21.3, 27.8, "The Drowned City", "Dungeon", 35, 40 },
+    },
+    [1435] = {
+        { "D", 69.9, 53.6, "Temple of Atal'Hakkar", "Dungeon", 50, 60 },
+    },
+    [1436] = {
+        { "D", 42.5, 71.7, "The Deadmines", "Dungeon", 17, 26 },
+    },
+    [1437] = {
+        { "D", 47.8, 56.2, "Excavation Site: Wetlands", "Dungeon", 24, 29 },
+    },
+    [1440] = {
+        { "D", 14.5, 14.2, "Blackfathom Deeps", "Dungeon", 24, 32 },
+    },
+    [1443] = {
+        { "D", 29.1, 62.5, "Maraudon", "Dungeon", 46, 55 },
+    },
+    [1444] = {
+        { "D", 62.5, 24.9, "Dire Maul (North)", "Dungeon", 56, 60 },
+        { "D", 60.3, 30.2, "Dire Maul (West)", "Dungeon", 56, 60 },
+        { "D", 64.8, 30.2, "Dire Maul (East)", "Dungeon", 56, 60 },
+    },
+    [1445] = {
+        { "D", 75.3, 14.1, "Alcaz Prison", "Dungeon", 48, 53 },
+        { "R", 52.6, 76.8, "Onyxia's Lair", "Raid", 60, 60 },
+    },
+    [1446] = {
+        { "D", 38.7, 20, "Zul'Farrak", "Dungeon", 44, 54 },
+    },
+    [1447] = {
+        { "D", 38.6, 33.2, "Blackmaw Hold", "Dungeon", 55, 60 },
+    },
+    [1449] = {
+        { "D", 48.1, 6.1, "Shaper's Terrace", "Dungeon", 58, 60 },
+    },
+    [1451] = {
+        { "R", 28.6, 92.4, "Ahn'Qiraj", "Ruins of Ahn'Qiraj, Temple of Ahn'Qiraj", 60, 60 },
+    },
+    [1453] = {
+        { "D", 52.4, 70, "The Stockade", "Dungeon", 22, 30 },
+    },
+    [1454] = {
+        { "D", 52.6, 49, "Ragefire Chasm", "Dungeon", 13, 18 },
+    },
+    [1455] = {
+        { "D", 27.7, 47.9, "The Hall of Thanes", "Dungeon", 13, 18 },
+    },
+    [1458] = {
+        { "D", 72.5, 11.4, "The Ruins of Lordaeron", "Dungeon", 15, 20 },
+    },
+    [2548] = {
+        { "D", 37.5, 37.3, "Krol'dok Stronghold", "Dungeon", 40, 45 },
     },
 }
 
