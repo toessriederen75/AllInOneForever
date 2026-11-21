@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.44.0
+- Info bar: new segment "Reagents" – the reagents your class needs for its spells with how many you carry (0 in red), from the level the spell is learnt; of druid seeds, priest candles and the like only the one of your current rank. Hover for the names.
+- Info bar: new segment "Ammunition" – how much of the equipped ammunition you carry (red under 200, yellow under 500); shown only with a bow, gun or crossbow or ammunition equipped.
+
 ## 2.43.0
 - Map details: dungeon and raid entrances on zone maps (35 places, Forever's new dungeons included), with the instance's level range in the tooltip; Blackrock Mountain and Ahn'Qiraj list the instances inside. Switchable ("Instance entrances").
 - Zone crossings and flight masters updated to Leatrix Maps 1.60.35 (124 crossings now).
