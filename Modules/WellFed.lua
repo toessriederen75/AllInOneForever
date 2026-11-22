@@ -34,7 +34,7 @@ local WELL_FED = 19705
 local ICON = "Interface\\Icons\\Spell_Misc_Food"
 
 local defaults = {
-    showActive = true, instanceOnly = false, notResting = false, hideCombat = false,
+    showWhileFed = false, instanceOnly = false, notResting = false, hideCombat = false,
     warn = 5, size = 56,
     point = { "CENTER", "UIParent", "CENTER", 0, -120 },
 }
@@ -47,7 +47,7 @@ local M = AIO:NewModule("wellfed", {
     default  = true,
     defaults = defaults,
     options  = {
-        { type = "toggle", key = "showActive", label = L["Show while Well Fed (time left)"] },
+        { type = "toggle", key = "showWhileFed", label = L["Show while Well Fed (time left)"] },
         { type = "toggle", key = "instanceOnly", label = L["Only in dungeons and raids"], half = true },
         { type = "toggle", key = "notResting", label = L["Not in cities and inns"], half = true },
         { type = "toggle", key = "hideCombat", label = L["Not in combat"], half = true },
@@ -228,7 +228,7 @@ local function Wanted()
     end
     if db.notResting and IsResting() then return false end
     if db.hideCombat and InCombatLockdown() then return false end
-    if state.fed and not db.showActive then return false end
+    if state.fed and not db.showWhileFed then return false end
     return true
 end
 

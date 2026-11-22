@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.45.1
+- Well Fed reminder: shows only while you are not Well Fed. The time left can still be switched on in the options ("Show while Well Fed").
+
 ## 2.45.0
 - New: Well Fed reminder (Buffs). A large icon of its own glows red while you are not Well Fed and shows the time left while you are; it turns yellow shortly before the buff runs out (2, 5 or 10 min, or off). Alt + drag moves it. Options: show only while missing, only in dungeons and raids, not in cities and inns, not in combat, size.
 
