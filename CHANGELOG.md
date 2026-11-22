@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.45.2
+- Well Fed reminder: new option "Not in PvP" (on): no reminder in battlegrounds and arenas.
+
 ## 2.45.1
 - Well Fed reminder: shows only while you are not Well Fed. The time left can still be switched on in the options ("Show while Well Fed").
 

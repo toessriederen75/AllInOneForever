@@ -20,6 +20,8 @@ if GetLocale() == "deDE" then
     L["Only in dungeons and raids"] = "Nur in Dungeons und Schlachtzügen"
     L["Not in cities and inns"]  = "Nicht in Städten und Gasthäusern"
     L["Not in combat"]           = "Nicht im Kampf"
+    L["Not in PvP"]              = "Nicht im PvP"
+    L["Not in battlegrounds and arenas."] = "Nicht in Schlachtfeldern und Arenen."
     L["Warn before expiry"]      = "Warnen vor Ablauf"
     L["%d min"]                  = "%d Min."
     L["Size"]                    = "Grösse"
@@ -34,7 +36,7 @@ local WELL_FED = 19705
 local ICON = "Interface\\Icons\\Spell_Misc_Food"
 
 local defaults = {
-    showWhileFed = false, instanceOnly = false, notResting = false, hideCombat = false,
+    showWhileFed = false, notPvP = true, instanceOnly = false, notResting = false, hideCombat = false,
     warn = 5, size = 56,
     point = { "CENTER", "UIParent", "CENTER", 0, -120 },
 }
@@ -51,6 +53,8 @@ local M = AIO:NewModule("wellfed", {
         { type = "toggle", key = "instanceOnly", label = L["Only in dungeons and raids"], half = true },
         { type = "toggle", key = "notResting", label = L["Not in cities and inns"], half = true },
         { type = "toggle", key = "hideCombat", label = L["Not in combat"], half = true },
+        { type = "toggle", key = "notPvP", label = L["Not in PvP"], half = true,
+          desc = L["Not in battlegrounds and arenas."] },
         { type = "select", key = "warn", label = L["Warn before expiry"], width = 120, values = {
             { value = 0, label = L["Off"] }, { value = 2, label = L["%d min"]:format(2) },
             { value = 5, label = L["%d min"]:format(5) }, { value = 10, label = L["%d min"]:format(10) } } },
@@ -222,8 +226,9 @@ end
 local function Wanted()
     local db = M.db
     if UnitIsDeadOrGhost("player") then return false end
+    local inside, kind = IsInInstance()
+    if db.notPvP and inside and (kind == "pvp" or kind == "arena") then return false end
     if db.instanceOnly then
-        local inside, kind = IsInInstance()
         if not inside or (kind ~= "party" and kind ~= "raid") then return false end
     end
     if db.notResting and IsResting() then return false end
