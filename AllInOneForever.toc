@@ -29,6 +29,7 @@ Modules\Quests.lua
 Modules\QuestDone.lua
 Modules\Buffs.lua
 Modules\Consumables.lua
+Modules\WellFed.lua
 Modules\InfoBar.lua
 Modules\Tooltip.lua
 Modules\Minimap.lua

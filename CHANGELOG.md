@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.45.0
+- New: Well Fed reminder (Buffs). A large icon of its own glows red while you are not Well Fed and shows the time left while you are; it turns yellow shortly before the buff runs out (2, 5 or 10 min, or off). Alt + drag moves it. Options: show only while missing, only in dungeons and raids, not in cities and inns, not in combat, size.
+
 ## 2.44.2
 - Info bar: clicking durability, coordinates or guild no longer opens the window from our code (on the newer client that tainted the character window and gave an error about a "secret number value"); the segment clicks the game's own button of the micro menu instead. While in combat the bar only updates its texts and lays itself out again afterwards.
 
