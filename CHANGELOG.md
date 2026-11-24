@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.45.3
+- Chat: "Copy character name" (and other entries) in the menu of a name in the chat no longer fail. Blizzard's link handling is not replaced any more for our web links (that tainted every click on a link); web links now use the game's own link type for addons.
+
 ## 2.45.2
 - Well Fed reminder: new option "Not in PvP" (on): no reminder in battlegrounds and arenas.
 
