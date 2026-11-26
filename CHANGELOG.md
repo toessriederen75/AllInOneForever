@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.45.4
+- Battlegrounds and instances: no more chat errors ("secret string value", BattlegroundChatFilters, whisper target). On the newer client chat lines there carry protected values, and Blizzard's chat code fails as soon as an addon's code ran in between. The chat module therefore no longer replaces the chat windows' AddMessage, and its filters (clickable web addresses, short channel numbers) are taken out inside instances and put back outside. Short names for guild, party etc. ([G], [P]) are no longer possible on this client; channel numbers stay short.
+- Error log: no longer replaces the game's error handler on the newer client (that made errors with protected text fail a second time in Blizzard's error window); it only looks at what the error window receives.
+
 ## 2.45.3
 - Chat: "Copy character name" (and other entries) in the menu of a name in the chat no longer fail. Blizzard's link handling is not replaced any more for our web links (that tainted every click on a link); web links now use the game's own link type for addons.
 

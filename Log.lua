@@ -43,23 +43,45 @@ local function Add(kind, msg, stack)
 end
 
 -- Lua errors: ours, or anything about a bank window.
-local previous = geterrorhandler and geterrorhandler()
-local busy = false
-if seterrorhandler then seterrorhandler(function(msg, ...)
-    if not busy then
-        busy = true
-        pcall(function()
-            local text = tostring(msg)
-            local stack = debugstack and debugstack(3) or ""
-            if text:find(ADDON, 1, true) or stack:find(ADDON, 1, true)
-                or text:find("Bank", 1, true) or stack:find("Bank", 1, true) then
-                Add("error", text, stack)
-            end
-        end)
-        busy = false
+local IsSecret = _G.issecretvalue or function() return false end
+
+local function Consider(msg, stack)
+    if IsSecret(msg) then return end
+    local text = tostring(msg)
+    stack = stack or ""
+    if text:find(ADDON, 1, true) or stack:find(ADDON, 1, true)
+        or text:find("Bank", 1, true) or stack:find("Bank", 1, true) then
+        Add("error", text, stack)
     end
-    if previous then return previous(msg, ...) end
-end) end
+end
+
+-- Newer client (WoW Forever): the game's error handler must stay the game's,
+-- else every error with a "secret" text fails a second time in Blizzard's
+-- error window. We only look at what that window is handed (afterwards).
+local hookedWindow = false
+local function HookErrorWindow()
+    local w = _G.ScriptErrorsFrame
+    if hookedWindow or not (w and w.OnError) then return end
+    hookedWindow = true
+    hooksecurefunc(w, "OnError", function(_, msg)
+        pcall(Consider, msg, nil)
+    end)
+end
+
+if _G.issecretvalue then
+    HookErrorWindow()
+elseif seterrorhandler then
+    local previous = geterrorhandler and geterrorhandler()
+    local busy = false
+    seterrorhandler(function(msg, ...)
+        if not busy then
+            busy = true
+            pcall(Consider, msg, debugstack and debugstack(3) or "")
+            busy = false
+        end
+        if previous then return previous(msg, ...) end
+    end)
+end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
@@ -68,6 +90,7 @@ f:RegisterEvent("ADDON_ACTION_FORBIDDEN")
 f:SetScript("OnEvent", function(_, event, a, b)
     if event == "ADDON_LOADED" then
         if a == ADDON then Store() end
+        if a == "Blizzard_ScriptErrorsFrame" and _G.issecretvalue then HookErrorWindow() end
         return
     end
     -- The game names the addon it blames and the protected function.
